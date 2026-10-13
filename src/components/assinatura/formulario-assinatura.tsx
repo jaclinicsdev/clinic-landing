@@ -38,6 +38,17 @@ const VAZIO = {
   adminEmail: "",
 };
 
+const MEIOS = [
+  {
+    valor: "cartao",
+    rotulo: "Cartão de crédito",
+    detalhe: "Cobrado agora e depois todo mês, automaticamente. Dá para desligar quando quiser.",
+  },
+  { valor: "pix", rotulo: "Pix", detalhe: "Você paga todo mês. Avisamos por e-mail antes do vencimento." },
+] as const;
+
+type Meio = (typeof MEIOS)[number]["valor"];
+
 const CAMPO =
   "mt-1.5 w-full rounded-xl border border-ja-line bg-ja-surface px-3 py-2.5 text-sm text-ja-ink focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ja-teal";
 
@@ -53,8 +64,11 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
   const [enviando, setEnviando] = React.useState(false);
   const [resultado, setResultado] = React.useState<Resultado | null>(null);
   const [etapa, setEtapa] = React.useState<1 | 2>(1);
+  const [meio, setMeio] = React.useState<Meio>("cartao");
   const pago = modo === "pago";
   const anual = pago && ciclo === "anual";
+  // Mensal pago: no cartão já vira cobrança automática; no Pix, pagamento avulso todo mês.
+  const escolheMeio = pago && !anual;
   const login = linkDoSistema("/login");
 
   function alterar(campo: keyof typeof VAZIO, valor: string) {
@@ -85,6 +99,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
     const corpo = {
       plano,
       ciclo: pago ? ciclo : "mensal",
+      ...(escolheMeio ? { meio } : {}),
       clinica: {
         nomeFantasia: valores.nomeFantasia,
         razaoSocial: valores.razaoSocial,
@@ -170,7 +185,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
         {anual
           ? "No Mercado Pago, pague o ano no Pix à vista ou no cartão em até 12x. Depois do pagamento, o acesso chega no e-mail do administrador."
           : pago
-            ? "A mensalidade é paga todo mês, no Pix ou no cartão. Depois do pagamento, o acesso chega no e-mail do administrador."
+            ? "Escolha como pagar a mensalidade. Depois do primeiro pagamento, o acesso chega no e-mail do administrador."
             : etapa === 1
               ? "Primeiro, quem vai administrar a clínica. A senha temporária chega nesse e-mail."
               : "Agora os dados da clínica. São 7 dias no plano escolhido, sem cartão."}
@@ -221,6 +236,36 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
           <Campo rotulo="Telefone" valor={valores.telefone} onChange={(valor) => alterar("telefone", valor)} />
         ) : null}
       </div>
+
+      {escolheMeio ? (
+        <fieldset className="mt-6">
+          <legend className="text-xs font-semibold uppercase tracking-wider text-ja-ink">Como pagar</legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {MEIOS.map((item) => {
+              const ativo = item.valor === meio;
+              return (
+                <label
+                  key={item.valor}
+                  className={`flex cursor-pointer flex-col rounded-xl border p-3 transition-colors ${
+                    ativo ? "border-ja-teal bg-ja-surface" : "border-ja-line hover:bg-ja-surface"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="meio"
+                    value={item.valor}
+                    checked={ativo}
+                    onChange={() => setMeio(item.valor)}
+                    className="sr-only"
+                  />
+                  <span className="text-sm font-semibold text-ja-ink">{item.rotulo}</span>
+                  <span className="mt-0.5 text-xs text-ja-muted">{item.detalhe}</span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {!pago && etapa === 2 ? (

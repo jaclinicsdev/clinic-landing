@@ -60,7 +60,13 @@ function RetornoPagamento() {
         setEmail(json?.email || "");
         setAcessoEnviado(json?.acessoEnviado !== false);
         const status = json?.status;
-        setEstado(status === "pago" ? "pago" : status === "revisao" || status === "estornado" ? "erro" : "pendente");
+        setEstado(
+          status === "pago"
+            ? "pago"
+            : status === "revisao" || status === "estornado" || status === "recusado"
+              ? "erro"
+              : "pendente",
+        );
         if (status === "pendente" && tentativa < 6) {
           timer = setTimeout(() => void consultar(tentativa + 1), 5000);
         }
@@ -88,7 +94,7 @@ function RetornoPagamento() {
         {estadoTela === "pago" && email && acessoEnviado ? (
           <p className="mt-3 text-sm text-ja-muted">O acesso foi enviado para {email}.</p>
         ) : null}
-        {estadoTela === "pendente" && resultado === "pendente" ? (
+        {estadoTela === "pendente" && (resultado === "pendente" || !resultado) ? (
           <p className="mt-3 text-sm text-ja-muted">
             Assim que o Mercado Pago confirmar, o acesso chega no e-mail do administrador. Você pode fechar esta página.
           </p>
