@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/lib/brand";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { Avisos } from "@/components/layout/Avisos";
 import { CONTACT_CONFIG } from "@/lib/constants";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -69,7 +70,10 @@ export default function RootLayout({
         <Script id="ja-theme-init" strategy="beforeInteractive">
           {themeInitScript}
         </Script>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Avisos />
+        </ThemeProvider>
       </body>
     </html>
   );

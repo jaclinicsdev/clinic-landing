@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { toast } from "sonner";
 
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
 import { linkDoSistema, reais, urlApi } from "@/lib/planos-publicos";
+import { campoDoErro, cnpjValido, MENSAGEM_CNPJ, MENSAGEM_TELEFONE, telefoneValido } from "@/lib/validacao";
 
 interface FormularioAssinaturaProps {
   plano: string;
@@ -49,8 +51,16 @@ const MEIOS = [
 
 type Meio = (typeof MEIOS)[number]["valor"];
 
+type CampoConferido = "telefone" | "cnpj";
+
 const CAMPO =
-  "mt-1.5 w-full rounded-xl border border-ja-line bg-ja-surface px-3 py-2.5 text-sm text-ja-ink focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ja-teal";
+  "mt-1.5 w-full rounded-xl border bg-ja-surface px-3 py-2.5 text-sm text-ja-ink focus:border-transparent focus:outline-none focus:ring-2";
+
+/** Falha de rede vira mensagem em português; erro da API já vem pronto para a tela. */
+function mensagemDoErro(err: unknown, padrao: string) {
+  if (err instanceof TypeError) return "Não foi possível falar com o servidor. Confira a internet e tente de novo.";
+  return err instanceof Error && err.message ? err.message : padrao;
+}
 
 export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, iniciais }: FormularioAssinaturaProps) {
   const router = useRouter();
@@ -60,7 +70,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
     adminNome: iniciais?.adminNome?.trim() || "",
     adminEmail: iniciais?.adminEmail?.trim() || "",
   });
-  const [erro, setErro] = React.useState("");
+  const [invalido, setInvalido] = React.useState<CampoConferido | null>(null);
   const [enviando, setEnviando] = React.useState(false);
   const [resultado, setResultado] = React.useState<Resultado | null>(null);
   const [etapa, setEtapa] = React.useState<1 | 2>(1);
@@ -75,12 +85,35 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
     const formatado =
       campo === "telefone" ? formatarTelefone(valor) : campo === "cnpj" ? formatarCnpj(valor) : valor;
     setValores((atual) => ({ ...atual, [campo]: formatado }));
+    if (campo === invalido) setInvalido(null);
+  }
+
+  /** Marca o campo, avisa no toast e leva o cursor até ele. */
+  function apontar(campo: CampoConferido, mensagem: string) {
+    setInvalido(campo);
+    toast.error(mensagem);
+    window.setTimeout(() => document.getElementById(campo)?.focus(), 0);
+  }
+
+  /** Confere telefone e CNPJ antes de enviar (na ordem em que aparecem na tela). */
+  function conferir(campos: CampoConferido[]) {
+    for (const campo of campos) {
+      if (campo === "cnpj" && !cnpjValido(valores.cnpj)) {
+        apontar("cnpj", MENSAGEM_CNPJ);
+        return false;
+      }
+      if (campo === "telefone" && !telefoneValido(valores.telefone)) {
+        apontar("telefone", MENSAGEM_TELEFONE);
+        return false;
+      }
+    }
+    return true;
   }
 
   function aoEnviar(evento: React.FormEvent) {
     evento.preventDefault();
     if (!pago && etapa === 1) {
-      setErro("");
+      if (!conferir(["telefone"])) return;
       setValores((atual) => ({
         ...atual,
         emailClinica: atual.emailClinica.trim() || atual.adminEmail.trim(),
@@ -88,11 +121,11 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
       setEtapa(2);
       return;
     }
+    if (!conferir(["cnpj", "telefone"])) return;
     void concluir();
   }
 
   async function concluir() {
-    setErro("");
     setEnviando(true);
 
     const base = urlApi(`/assinatura/${pago ? "checkout" : "gratuito"}`);
@@ -138,7 +171,10 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
         senhaTemporaria: json?.senhaTemporaria,
       });
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Não foi possível concluir a assinatura.");
+      const mensagem = mensagemDoErro(err, "Não foi possível concluir a assinatura.");
+      const campo = campoDoErro(mensagem);
+      if (campo) apontar(campo, mensagem);
+      else toast.error(mensagem);
     } finally {
       setEnviando(false);
     }
@@ -200,19 +236,24 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
         </div>
       ) : null}
 
-      {erro ? (
-        <p role="alert" className="mt-4 rounded-xl border border-ja-line bg-ja-surface px-3 py-2 text-sm text-ja-ink">
-          {erro}
-        </p>
-      ) : null}
-
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {(pago || etapa === 2) && (
           <>
             <Campo rotulo="Nome fantasia" valor={valores.nomeFantasia} onChange={(valor) => alterar("nomeFantasia", valor)} />
             <Campo rotulo="Razão social" valor={valores.razaoSocial} onChange={(valor) => alterar("razaoSocial", valor)} />
-            <Campo rotulo="CNPJ" valor={valores.cnpj} onChange={(valor) => alterar("cnpj", valor)} />
-            <Campo rotulo="Telefone" valor={valores.telefone} onChange={(valor) => alterar("telefone", valor)} />
+            <Campo
+              rotulo="CNPJ"
+              valor={valores.cnpj}
+              invalido={invalido === "cnpj"}
+              onChange={(valor) => alterar("cnpj", valor)}
+            />
+            <Campo
+              rotulo="Telefone"
+              tipo="tel"
+              valor={valores.telefone}
+              invalido={invalido === "telefone"}
+              onChange={(valor) => alterar("telefone", valor)}
+            />
             <Campo rotulo="E-mail da clínica" tipo="email" valor={valores.emailClinica} onChange={(valor) => alterar("emailClinica", valor)} />
             <Campo rotulo="Cidade da unidade" valor={valores.cidade} onChange={(valor) => alterar("cidade", valor)} />
             <Campo rotulo="Nome da unidade" valor={valores.unidadeNome} onChange={(valor) => alterar("unidadeNome", valor)} />
@@ -233,7 +274,13 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
           </>
         )}
         {!pago && etapa === 1 ? (
-          <Campo rotulo="Telefone" valor={valores.telefone} onChange={(valor) => alterar("telefone", valor)} />
+          <Campo
+            rotulo="Telefone"
+            tipo="tel"
+            valor={valores.telefone}
+            invalido={invalido === "telefone"}
+            onChange={(valor) => alterar("telefone", valor)}
+          />
         ) : null}
       </div>
 
@@ -272,7 +319,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
           <button
             type="button"
             onClick={() => {
-              setErro("");
+              setInvalido(null);
               setEtapa(1);
             }}
             className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ja-line px-5 text-sm font-semibold text-ja-ink hover:bg-ja-surface"
@@ -308,17 +355,27 @@ function Campo({
   valor,
   onChange,
   tipo = "text",
+  invalido = false,
 }: {
   rotulo: string;
   valor: string;
   onChange: (valor: string) => void;
   tipo?: string;
+  invalido?: boolean;
 }) {
   const id = rotulo.toLowerCase().replace(/\s+/g, "-");
   return (
     <label className="block text-sm" htmlFor={id}>
       <span className="text-xs font-semibold uppercase tracking-wider text-ja-ink">{rotulo}</span>
-      <input id={id} required type={tipo} value={valor} onChange={(evento) => onChange(evento.target.value)} className={CAMPO} />
+      <input
+        id={id}
+        required
+        type={tipo}
+        value={valor}
+        aria-invalid={invalido || undefined}
+        onChange={(evento) => onChange(evento.target.value)}
+        className={`${CAMPO} ${invalido ? "border-red-500 focus:ring-red-500" : "border-ja-line focus:ring-ja-teal"}`}
+      />
     </label>
   );
 }

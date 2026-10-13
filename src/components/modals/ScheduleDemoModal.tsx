@@ -14,10 +14,12 @@ import {
   User,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { BRAND } from "@/lib/brand";
 import { PLANOS, type PlanoComercial } from "@/lib/planos";
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
 import { linkDoSistema, urlApi } from "@/lib/planos-publicos";
+import { campoDoErro, cnpjValido, MENSAGEM_CNPJ, MENSAGEM_TELEFONE, telefoneValido } from "@/lib/validacao";
 
 interface ScheduleDemoModalProps {
   isOpen: boolean;
@@ -39,14 +41,24 @@ const CLINICA_VAZIA = {
   unidadeNome: "Matriz",
 };
 
-const CAMPO =
-  "w-full rounded-xl border border-ja-line bg-ja-surface py-2.5 pl-10 pr-3 text-sm text-ja-ink placeholder:text-ja-muted/80 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-ja-teal";
+const CAMPO_BASE =
+  "w-full rounded-xl border bg-ja-surface py-2.5 pl-10 pr-3 text-sm text-ja-ink placeholder:text-ja-muted/80 focus:border-transparent focus:outline-none focus:ring-2";
+const CAMPO = `${CAMPO_BASE} border-ja-line focus:ring-ja-teal`;
+const CAMPO_INVALIDO = `${CAMPO_BASE} border-red-500 focus:ring-red-500`;
+
+type CampoConferido = "telefone" | "cnpj";
+
+/** Falha de rede vira mensagem em português; erro da API já vem pronto para a tela. */
+function mensagemDoErro(err: unknown, padrao: string) {
+  if (err instanceof TypeError) return "Não foi possível falar com o servidor. Confira a internet e tente de novo.";
+  return err instanceof Error && err.message ? err.message : padrao;
+}
 
 export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: ScheduleDemoModalProps) {
   const [plano, setPlano] = useState<PlanoComercial["codigo"]>(planoInicial ?? "profissional");
   const [etapa, setEtapa] = useState<1 | 2>(1);
   const [enviando, setEnviando] = useState(false);
-  const [erro, setErro] = useState("");
+  const [invalido, setInvalido] = useState<CampoConferido | null>(null);
   const [resultado, setResultado] = useState<{ mensagem: string; email: string; acessoEnviado: boolean } | null>(null);
   const [contato, setContato] = useState({
     nome: iniciais?.nome?.trim() || "",
@@ -67,7 +79,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
     document.body.style.overflow = "hidden";
     if (!estavaAberto.current) {
       setEtapa(1);
-      setErro("");
+      setInvalido(null);
       setResultado(null);
       setPlano(planoInicial ?? "profissional");
     }
@@ -84,17 +96,30 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
   function alterarContato(campo: keyof typeof contato, valor: string) {
     const formatado = campo === "telefone" ? formatarTelefone(valor) : valor;
     setContato((atual) => ({ ...atual, [campo]: formatado }));
+    if (campo === invalido) setInvalido(null);
   }
 
   function alterarClinica(campo: keyof typeof CLINICA_VAZIA, valor: string) {
     const formatado = campo === "cnpj" ? formatarCnpj(valor) : valor;
     setClinica((atual) => ({ ...atual, [campo]: formatado }));
+    if (campo === invalido) setInvalido(null);
+  }
+
+  /** Marca o campo, avisa no toast e leva o cursor até ele (o telefone fica na primeira etapa). */
+  function apontar(campo: CampoConferido, mensagem: string) {
+    setInvalido(campo);
+    if (campo === "telefone") setEtapa(1);
+    toast.error(mensagem);
+    window.setTimeout(() => document.getElementById(`demo-${campo}`)?.focus(), 50);
   }
 
   function avancar(evento: React.FormEvent) {
     evento.preventDefault();
     if (etapa === 1) {
-      setErro("");
+      if (!telefoneValido(contato.telefone)) {
+        apontar("telefone", MENSAGEM_TELEFONE);
+        return;
+      }
       setClinica((atual) => ({
         ...atual,
         emailClinica: atual.emailClinica.trim() || contato.email.trim(),
@@ -103,11 +128,14 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
       setEtapa(2);
       return;
     }
+    if (!cnpjValido(clinica.cnpj)) {
+      apontar("cnpj", MENSAGEM_CNPJ);
+      return;
+    }
     void concluir();
   }
 
   async function concluir() {
-    setErro("");
     setEnviando(true);
     const base = urlApi("/assinatura/gratuito");
     try {
@@ -142,7 +170,10 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
         email: json?.email || contato.email,
       });
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Não foi possível começar o teste.");
+      const mensagem = mensagemDoErro(err, "Não foi possível começar o teste.");
+      const campo = campoDoErro(mensagem);
+      if (campo) apontar(campo, mensagem);
+      else toast.error(mensagem);
     } finally {
       setEnviando(false);
     }
@@ -228,12 +259,6 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
             ) : (
               <form onSubmit={avancar}>
                 <div className="space-y-4 px-5 py-5 sm:px-7">
-                  {erro ? (
-                    <p role="alert" className="rounded-xl border border-ja-line bg-ja-surface px-3 py-2 text-sm text-ja-ink">
-                      {erro}
-                    </p>
-                  ) : null}
-
                   {etapa === 1 ? (
                     <>
                       <CampoIcone icone={User} rotulo="Nome completo">
@@ -261,13 +286,15 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                         </CampoIcone>
                         <CampoIcone icone={Phone} rotulo="WhatsApp">
                           <input
+                            id="demo-telefone"
                             required
                             type="tel"
                             autoComplete="tel"
                             value={contato.telefone}
+                            aria-invalid={invalido === "telefone" || undefined}
                             onChange={(evento) => alterarContato("telefone", evento.target.value)}
                             placeholder="(16) 99999-9999"
-                            className={CAMPO}
+                            className={invalido === "telefone" ? CAMPO_INVALIDO : CAMPO}
                           />
                         </CampoIcone>
                       </div>
@@ -320,12 +347,14 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <CampoIcone icone={Building2} rotulo="CNPJ">
                           <input
+                            id="demo-cnpj"
                             required
                             inputMode="numeric"
                             value={clinica.cnpj}
+                            aria-invalid={invalido === "cnpj" || undefined}
                             onChange={(evento) => alterarClinica("cnpj", evento.target.value)}
                             placeholder="00.000.000/0001-00"
-                            className={CAMPO}
+                            className={invalido === "cnpj" ? CAMPO_INVALIDO : CAMPO}
                           />
                         </CampoIcone>
                         <CampoIcone icone={MapPin} rotulo="Cidade">
@@ -370,7 +399,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                     <button
                       type="button"
                       onClick={() => {
-                        setErro("");
+                        setInvalido(null);
                         setEtapa(1);
                       }}
                       className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ja-line px-4 text-sm font-semibold text-ja-ink transition-colors hover:bg-ja-surface"
