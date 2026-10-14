@@ -46,6 +46,15 @@ function carregarSeguranca() {
   document.body.appendChild(script);
 }
 
+/** Espera o script de segurança deixar o Device ID (no máximo alguns segundos): sem ele o antifraude recusa mais. */
+async function esperarDispositivo(limiteMs = 4000): Promise<string | null> {
+  const fim = Date.now() + limiteMs;
+  while (!dispositivo() && Date.now() < fim) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return dispositivo();
+}
+
 /**
  * Formulário de cartão do próprio Mercado Pago (Card Payment Brick), dentro do site: o cartão vai direto
  * para o Mercado Pago, que devolve um token. Ninguém precisa entrar numa conta do Mercado Pago.
@@ -55,6 +64,11 @@ export function CartaoMercadoPago({ valor, email, parcelasMaximas = 1, onCartao 
   // Sem o endereço da API, nem tenta: o formulário fica indisponível.
   const [chave, setChave] = React.useState<string | null | undefined>(url ? undefined : null);
   const [pronto, setPronto] = React.useState(false);
+
+  // O script de segurança começa a rodar já na abertura, para o Device ID estar pronto no envio.
+  React.useEffect(() => {
+    carregarSeguranca();
+  }, []);
 
   React.useEffect(() => {
     if (!url) return;
@@ -99,10 +113,7 @@ export function CartaoMercadoPago({ valor, email, parcelasMaximas = 1, onCartao 
             },
           }}
           locale="pt-BR"
-          onReady={() => {
-            setPronto(true);
-            carregarSeguranca();
-          }}
+          onReady={() => setPronto(true)}
           onError={(erro) => console.error("[mercadopago] formulário do cartão", erro)}
           onSubmit={async (dados) => {
             await onCartao({
@@ -113,7 +124,7 @@ export function CartaoMercadoPago({ valor, email, parcelasMaximas = 1, onCartao 
               documento: dados.payer?.identification?.number
                 ? { tipo: dados.payer.identification.type, numero: dados.payer.identification.number }
                 : null,
-              dispositivo: dispositivo(),
+              dispositivo: await esperarDispositivo(),
             });
           }}
         />
