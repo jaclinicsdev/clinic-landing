@@ -5,13 +5,24 @@ import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
 
 import { urlApi } from "@/lib/planos-publicos";
 
+/** O que o formulário de cartão devolve. O número do cartão nunca passa pelo site. */
+export interface CartaoDoFormulario {
+  token: string;
+  metodo: string;
+  emissor: string | null;
+  parcelas: number;
+  documento: { tipo: string; numero: string } | null;
+}
+
 interface CartaoMercadoPagoProps {
-  /** Valor mostrado no formulário (a cobrança de verdade é a da assinatura, feita pela API). */
+  /** Valor mostrado no formulário (a cobrança de verdade é feita pela API). */
   valor: number;
   /** E-mail do administrador: preenche o formulário, que então não pede e-mail. */
   email: string;
-  /** Recebe o token do cartão. Lança para o formulário voltar ao estado de edição. */
-  onToken: (token: string) => Promise<void>;
+  /** Até quantas parcelas o formulário oferece. Padrão: à vista. */
+  parcelasMaximas?: number;
+  /** Recebe o cartão já tokenizado. Lança para o formulário voltar ao estado de edição. */
+  onCartao: (cartao: CartaoDoFormulario) => Promise<void>;
 }
 
 let chaveIniciada: string | null = null;
@@ -20,7 +31,7 @@ let chaveIniciada: string | null = null;
  * Formulário de cartão do próprio Mercado Pago (Card Payment Brick), dentro do site: o cartão vai direto
  * para o Mercado Pago, que devolve um token. Ninguém precisa entrar numa conta do Mercado Pago.
  */
-export function CartaoMercadoPago({ valor, email, onToken }: CartaoMercadoPagoProps) {
+export function CartaoMercadoPago({ valor, email, parcelasMaximas = 1, onCartao }: CartaoMercadoPagoProps) {
   const url = urlApi("/assinatura/mercadopago/config");
   // Sem o endereço da API, nem tenta: o formulário fica indisponível.
   const [chave, setChave] = React.useState<string | null | undefined>(url ? undefined : null);
@@ -62,13 +73,25 @@ export function CartaoMercadoPago({ valor, email, onToken }: CartaoMercadoPagoPr
         <CardPayment
           initialization={{ amount: valor, payer: { email } }}
           customization={{
-            paymentMethods: { minInstallments: 1, maxInstallments: 1, types: { excluded: ["debit_card", "prepaid_card"] } },
+            paymentMethods: {
+              minInstallments: 1,
+              maxInstallments: parcelasMaximas,
+              types: { excluded: ["debit_card", "prepaid_card"] },
+            },
           }}
           locale="pt-BR"
           onReady={() => setPronto(true)}
           onError={(erro) => console.error("[mercadopago] formulário do cartão", erro)}
           onSubmit={async (dados) => {
-            await onToken(dados.token);
+            await onCartao({
+              token: dados.token,
+              metodo: dados.payment_method_id,
+              emissor: dados.issuer_id ? String(dados.issuer_id) : null,
+              parcelas: dados.installments || 1,
+              documento: dados.payer?.identification?.number
+                ? { tipo: dados.payer.identification.type, numero: dados.payer.identification.number }
+                : null,
+            });
           }}
         />
       ) : null}
