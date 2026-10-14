@@ -45,7 +45,7 @@ const VAZIO = {
 
 type Meio = "cartao" | "pix";
 
-/** Mensal: cartão com cobrança automática ou Pix todo mês. Anual: cartão em até 12x ou Pix à vista. */
+/** Mensal: cartão ou Pix, pago todo mês. Anual: cartão em até 12x ou Pix à vista. */
 function meios(anual: boolean): { valor: Meio; rotulo: string; detalhe: string }[] {
   return [
     {
@@ -53,7 +53,7 @@ function meios(anual: boolean): { valor: Meio; rotulo: string; detalhe: string }
       rotulo: "Cartão de crédito",
       detalhe: anual
         ? "À vista ou em até 12x."
-        : "Cobrado agora e depois todo mês, automaticamente. Dá para desligar quando quiser.",
+        : "À vista. Você paga todo mês, e avisamos por e-mail antes do vencimento.",
     },
     {
       valor: "pix",
@@ -95,7 +95,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
   const [meio, setMeio] = React.useState<Meio>("cartao");
   const pago = modo === "pago";
   const anual = pago && ciclo === "anual";
-  // Mensal no cartão: cobrança automática. Anual no cartão: em até 12x. Pix: QR Code aqui mesmo.
+  // Mensal no cartão: à vista. Anual no cartão: em até 12x. Pix: QR Code aqui mesmo.
   const escolheMeio = pago;
   // Cartão: digitado aqui no formulário do Mercado Pago, sem login em conta nenhuma.
   const pedeCartao = escolheMeio && meio === "cartao";
@@ -435,7 +435,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
         <p className="mt-2 text-sm text-ja-muted">
           {anual
             ? `${reais(preco)} pelo ano, à vista ou em até 12x no cartão.`
-            : `${reais(preco)} agora e depois todo mês, no cartão. Dá para desligar a cobrança automática quando quiser.`}
+            : `${reais(preco)} à vista, referente ao primeiro mês. Os próximos meses são pagos pelo sistema, no cartão ou no Pix.`}
         </p>
         <div className="mt-4">
           <CartaoMercadoPago
