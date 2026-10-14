@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { CartaoMercadoPago } from "@/components/assinatura/cartao-mercado-pago";
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
 import { linkDoSistema, reais, urlApi } from "@/lib/planos-publicos";
 import { campoDoErro, cnpjValido, MENSAGEM_CNPJ, MENSAGEM_TELEFONE, telefoneValido } from "@/lib/validacao";
@@ -79,6 +80,10 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
   const anual = pago && ciclo === "anual";
   // Mensal pago: no cartão já vira cobrança automática; no Pix, pagamento avulso todo mês.
   const escolheMeio = pago && !anual;
+  // Cartão: digitado aqui no formulário do Mercado Pago, sem login em conta nenhuma.
+  const pedeCartao = escolheMeio && meio === "cartao";
+  const [cartaoAberto, setCartaoAberto] = React.useState(false);
+  const cartaoRef = React.useRef<HTMLDivElement>(null);
   const login = linkDoSistema("/login");
 
   function alterar(campo: keyof typeof VAZIO, valor: string) {
@@ -122,10 +127,22 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
       return;
     }
     if (!conferir(["cnpj", "telefone"])) return;
+    if (pedeCartao) {
+      setCartaoAberto(true);
+      window.setTimeout(() => cartaoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+      return;
+    }
     void concluir();
   }
 
-  async function concluir() {
+  /** Token do cartão: confere os dados de novo (podem ter mudado) e envia. Lança para o cartão aceitar outra tentativa. */
+  async function pagarComCartao(token: string) {
+    if (!conferir(["cnpj", "telefone"])) throw new Error("Confira os dados da clínica.");
+    const ok = await concluir(token);
+    if (!ok) throw new Error("Pagamento não concluído.");
+  }
+
+  async function concluir(cardToken?: string): Promise<boolean> {
     setEnviando(true);
 
     const base = urlApi(`/assinatura/${pago ? "checkout" : "gratuito"}`);
@@ -133,6 +150,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
       plano,
       ciclo: pago ? ciclo : "mensal",
       ...(escolheMeio ? { meio } : {}),
+      ...(cardToken ? { cardToken } : {}),
       clinica: {
         nomeFantasia: valores.nomeFantasia,
         razaoSocial: valores.razaoSocial,
@@ -160,21 +178,23 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
       if (pago && json?.checkoutUrl) {
         if (json.checkoutUrl.startsWith("http")) {
           window.location.assign(json.checkoutUrl);
-          return;
+          return true;
         }
         router.push(json.checkoutUrl);
-        return;
+        return true;
       }
       setResultado({
         mensagem: json?.mensagem || "Enviamos o acesso para o e-mail do administrador.",
         email: json?.email || valores.adminEmail,
         senhaTemporaria: json?.senhaTemporaria,
       });
+      return true;
     } catch (err) {
       const mensagem = mensagemDoErro(err, "Não foi possível concluir a assinatura.");
       const campo = campoDoErro(mensagem);
       if (campo) apontar(campo, mensagem);
       else toast.error(mensagem);
+      return false;
     } finally {
       setEnviando(false);
     }
@@ -206,6 +226,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
   }
 
   return (
+    <>
     <form onSubmit={aoEnviar} className="rounded-2xl border border-ja-line bg-ja-card p-6 sm:p-8">
       <p className="text-xs font-bold uppercase tracking-wider text-ja-teal">
         {pago ? "Assinatura" : "Acesso gratuito"}
@@ -302,7 +323,10 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
                     name="meio"
                     value={item.valor}
                     checked={ativo}
-                    onChange={() => setMeio(item.valor)}
+                    onChange={() => {
+                    setMeio(item.valor);
+                    if (item.valor !== "cartao") setCartaoAberto(false);
+                  }}
                     className="sr-only"
                   />
                   <span className="text-sm font-semibold text-ja-ink">{item.rotulo}</span>
@@ -327,26 +351,42 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
             Voltar
           </button>
         ) : null}
-        <button
-          type="submit"
-          disabled={enviando}
-          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ja-teal px-5 text-sm font-semibold text-white hover:bg-ja-teal-hover disabled:opacity-60"
-        >
-          {enviando
-            ? "Enviando…"
-            : !pago && etapa === 1
-              ? "Continuar"
-              : anual
-                ? "Ir para o pagamento anual"
-                : pago
-                  ? "Ir para o pagamento"
-                  : "Começar 7 dias grátis"}
-        </button>
+        {pedeCartao && cartaoAberto ? null : (
+          <button
+            type="submit"
+            disabled={enviando}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ja-teal px-5 text-sm font-semibold text-white hover:bg-ja-teal-hover disabled:opacity-60"
+          >
+            {enviando
+              ? "Enviando…"
+              : !pago && etapa === 1
+                ? "Continuar"
+                : anual
+                  ? "Ir para o pagamento anual"
+                  : pedeCartao
+                    ? "Continuar para o cartão"
+                    : pago
+                      ? "Ir para o pagamento"
+                      : "Começar 7 dias grátis"}
+          </button>
+        )}
         <Link href="/#planos" className="text-sm font-medium text-ja-muted hover:text-ja-ink">
           Trocar plano
         </Link>
       </div>
     </form>
+    {pedeCartao && cartaoAberto ? (
+      <div ref={cartaoRef} className="mt-4 scroll-mt-6 rounded-2xl border border-ja-line bg-ja-card p-6 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-wider text-ja-teal">Cartão de crédito</p>
+        <p className="mt-2 text-sm text-ja-muted">
+          {reais(preco)} agora e depois todo mês, no cartão. Dá para desligar a cobrança automática quando quiser.
+        </p>
+        <div className="mt-4">
+          <CartaoMercadoPago valor={preco} email={valores.adminEmail.trim()} onToken={pagarComCartao} />
+        </div>
+      </div>
+    ) : null}
+    </>
   );
 }
 
