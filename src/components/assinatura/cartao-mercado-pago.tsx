@@ -29,6 +29,12 @@ interface CartaoMercadoPagoProps {
 
 let chaveIniciada: string | null = null;
 
+type PropsDoBrick = React.ComponentProps<typeof CardPayment>;
+
+function erroDoBrick(erro: unknown) {
+  console.error("[mercadopago] formulário do cartão", erro);
+}
+
 /** Device ID que o script de segurança do Mercado Pago guarda no navegador (o antifraude recusa menos com ele). */
 function dispositivo(): string | null {
   const valor = (window as unknown as { MP_DEVICE_SESSION_ID?: unknown }).MP_DEVICE_SESSION_ID;
@@ -64,6 +70,41 @@ export function CartaoMercadoPago({ valor, email, parcelasMaximas = 1, onCartao 
   // Sem o endereço da API, nem tenta: o formulário fica indisponível.
   const [chave, setChave] = React.useState<string | null | undefined>(url ? undefined : null);
   const [pronto, setPronto] = React.useState(false);
+  const onCartaoAtual = React.useRef(onCartao);
+
+  React.useEffect(() => {
+    onCartaoAtual.current = onCartao;
+  });
+
+  // O Brick se recria vazio sempre que recebe um objeto ou uma função nova (por exemplo, quando a tela
+  // mostra o carregamento do pagamento): as props só mudam quando o valor ou as parcelas mudam.
+  const inicializacao = React.useMemo<PropsDoBrick["initialization"]>(
+    () => ({ amount: valor, payer: { email } }),
+    [valor, email],
+  );
+  const personalizacao = React.useMemo<PropsDoBrick["customization"]>(
+    () => ({
+      paymentMethods: {
+        minInstallments: 1,
+        maxInstallments: parcelasMaximas,
+        types: { excluded: ["debit_card", "prepaid_card"] },
+      },
+    }),
+    [parcelasMaximas],
+  );
+  const aoFicarPronto = React.useCallback(() => setPronto(true), []);
+  const aoEnviar = React.useCallback<NonNullable<PropsDoBrick["onSubmit"]>>(async (dados) => {
+    await onCartaoAtual.current({
+      token: dados.token,
+      metodo: dados.payment_method_id,
+      emissor: dados.issuer_id ? String(dados.issuer_id) : null,
+      parcelas: dados.installments || 1,
+      documento: dados.payer?.identification?.number
+        ? { tipo: dados.payer.identification.type, numero: dados.payer.identification.number }
+        : null,
+      dispositivo: await esperarDispositivo(),
+    });
+  }, []);
 
   // O script de segurança começa a rodar já na abertura, para o Device ID estar pronto no envio.
   React.useEffect(() => {
@@ -104,29 +145,12 @@ export function CartaoMercadoPago({ valor, email, parcelasMaximas = 1, onCartao 
       {!pronto ? <p className="text-sm text-ja-muted">Carregando o formulário do cartão…</p> : null}
       {chave ? (
         <CardPayment
-          initialization={{ amount: valor, payer: { email } }}
-          customization={{
-            paymentMethods: {
-              minInstallments: 1,
-              maxInstallments: parcelasMaximas,
-              types: { excluded: ["debit_card", "prepaid_card"] },
-            },
-          }}
+          initialization={inicializacao}
+          customization={personalizacao}
           locale="pt-BR"
-          onReady={() => setPronto(true)}
-          onError={(erro) => console.error("[mercadopago] formulário do cartão", erro)}
-          onSubmit={async (dados) => {
-            await onCartao({
-              token: dados.token,
-              metodo: dados.payment_method_id,
-              emissor: dados.issuer_id ? String(dados.issuer_id) : null,
-              parcelas: dados.installments || 1,
-              documento: dados.payer?.identification?.number
-                ? { tipo: dados.payer.identification.type, numero: dados.payer.identification.number }
-                : null,
-              dispositivo: await esperarDispositivo(),
-            });
-          }}
+          onReady={aoFicarPronto}
+          onError={erroDoBrick}
+          onSubmit={aoEnviar}
         />
       ) : null}
       <p className="text-xs text-ja-muted">
