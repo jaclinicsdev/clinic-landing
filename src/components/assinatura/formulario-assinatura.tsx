@@ -6,6 +6,7 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { CartaoMercadoPago, type CartaoDoFormulario } from "@/components/assinatura/cartao-mercado-pago";
+import { ConfirmacaoBanco } from "@/components/assinatura/confirmacao-banco";
 import { PixMercadoPago, type PixGerado } from "@/components/assinatura/pix-mercado-pago";
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
 import { linkDoSistema, reais, urlApi } from "@/lib/planos-publicos";
@@ -100,6 +101,8 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
   const pedeCartao = escolheMeio && meio === "cartao";
   const [cartaoAberto, setCartaoAberto] = React.useState(false);
   const [pix, setPix] = React.useState<PixNaTela | null>(null);
+  /** Cartão com 3DS: o banco pediu confirmação antes do resultado. */
+  const [desafio, setDesafio] = React.useState<{ url: string; retorno: string } | null>(null);
   const cartaoRef = React.useRef<HTMLDivElement>(null);
   const login = linkDoSistema("/login");
 
@@ -191,7 +194,13 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
         body: JSON.stringify(corpo),
       });
       const json = (await resposta.json().catch(() => null)) as
-        | (Resultado & { checkoutUrl?: string | null; pedidoId?: string | null; pix?: PixGerado | null; message?: string })
+        | (Resultado & {
+            checkoutUrl?: string | null;
+            pedidoId?: string | null;
+            pix?: PixGerado | null;
+            desafio?: string | null;
+            message?: string;
+          })
         | null;
       if (!resposta.ok) {
         throw new Error(json?.message || "Não foi possível concluir a assinatura.");
@@ -199,6 +208,10 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
       if (pago && json?.pix && json.pedidoId) {
         setPix({ pedidoId: json.pedidoId, pix: json.pix });
         rolarAtePagamento();
+        return true;
+      }
+      if (pago && json?.desafio && json.checkoutUrl) {
+        setDesafio({ url: json.desafio, retorno: json.checkoutUrl });
         return true;
       }
       if (pago && json?.checkoutUrl) {
@@ -400,6 +413,9 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
         </Link>
       </div>
     </form>
+    {desafio ? (
+      <ConfirmacaoBanco url={desafio.url} onConcluida={() => router.push(desafio.retorno)} />
+    ) : null}
     {pix ? (
       <div ref={cartaoRef} className="mt-4 scroll-mt-6 rounded-2xl border border-ja-line bg-ja-card p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-wider text-ja-teal">Pix</p>
