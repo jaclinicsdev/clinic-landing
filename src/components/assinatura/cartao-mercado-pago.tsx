@@ -12,6 +12,8 @@ export interface CartaoDoFormulario {
   emissor: string | null;
   parcelas: number;
   documento: { tipo: string; numero: string } | null;
+  /** Device ID do navegador (antifraude do Mercado Pago). */
+  dispositivo: string | null;
 }
 
 interface CartaoMercadoPagoProps {
@@ -26,6 +28,23 @@ interface CartaoMercadoPagoProps {
 }
 
 let chaveIniciada: string | null = null;
+
+/** Device ID que o script de segurança do Mercado Pago guarda no navegador (o antifraude recusa menos com ele). */
+function dispositivo(): string | null {
+  const valor = (window as unknown as { MP_DEVICE_SESSION_ID?: unknown }).MP_DEVICE_SESSION_ID;
+  return typeof valor === "string" && valor ? valor : null;
+}
+
+/** Carrega o script de segurança uma vez, se o SDK ainda não deixou o Device ID. */
+function carregarSeguranca() {
+  if (dispositivo() || document.getElementById("mp-seguranca")) return;
+  const script = document.createElement("script");
+  script.id = "mp-seguranca";
+  script.src = "https://www.mercadopago.com/v2/security.js";
+  script.setAttribute("view", "checkout");
+  script.async = true;
+  document.body.appendChild(script);
+}
 
 /**
  * Formulário de cartão do próprio Mercado Pago (Card Payment Brick), dentro do site: o cartão vai direto
@@ -80,7 +99,10 @@ export function CartaoMercadoPago({ valor, email, parcelasMaximas = 1, onCartao 
             },
           }}
           locale="pt-BR"
-          onReady={() => setPronto(true)}
+          onReady={() => {
+            setPronto(true);
+            carregarSeguranca();
+          }}
           onError={(erro) => console.error("[mercadopago] formulário do cartão", erro)}
           onSubmit={async (dados) => {
             await onCartao({
@@ -91,6 +113,7 @@ export function CartaoMercadoPago({ valor, email, parcelasMaximas = 1, onCartao 
               documento: dados.payer?.identification?.number
                 ? { tipo: dados.payer.identification.type, numero: dados.payer.identification.number }
                 : null,
+              dispositivo: dispositivo(),
             });
           }}
         />
