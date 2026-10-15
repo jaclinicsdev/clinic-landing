@@ -45,7 +45,7 @@ const VAZIO = {
 
 type Meio = "cartao" | "pix";
 
-/** Mensal: cartão ou Pix, pago todo mês. Anual: cartão em até 12x ou Pix à vista. */
+/** Mensal: cartão com cobrança automática ou Pix todo mês. Anual: cartão em até 12x ou Pix à vista. */
 function meios(anual: boolean): { valor: Meio; rotulo: string; detalhe: string }[] {
   return [
     {
@@ -53,7 +53,7 @@ function meios(anual: boolean): { valor: Meio; rotulo: string; detalhe: string }
       rotulo: "Cartão de crédito",
       detalhe: anual
         ? "À vista ou em até 12x."
-        : "À vista. Você paga todo mês, e avisamos por e-mail antes do vencimento.",
+        : "Cadastrado no Mercado Pago: cobrado agora e depois todo mês. Dá para desligar quando quiser.",
     },
     {
       valor: "pix",
@@ -95,10 +95,12 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
   const [meio, setMeio] = React.useState<Meio>("cartao");
   const pago = modo === "pago";
   const anual = pago && ciclo === "anual";
-  // Mensal no cartão: à vista. Anual no cartão: em até 12x. Pix: QR Code aqui mesmo.
+  // Mensal no cartão: assinatura na página do Mercado Pago. Anual no cartão: em até 12x. Pix: QR Code aqui mesmo.
   const escolheMeio = pago;
-  // Cartão: digitado aqui no formulário do Mercado Pago, sem login em conta nenhuma.
-  const pedeCartao = escolheMeio && meio === "cartao";
+  // Mensal no cartão: o cartão é cadastrado na página de assinatura do Mercado Pago, que cobra todo mês.
+  const assinaturaNoMercadoPago = escolheMeio && meio === "cartao" && !anual;
+  // Anual no cartão: digitado aqui no formulário do Mercado Pago, sem login em conta nenhuma.
+  const pedeCartao = escolheMeio && meio === "cartao" && anual;
   const [cartaoAberto, setCartaoAberto] = React.useState(false);
   const [pix, setPix] = React.useState<PixNaTela | null>(null);
   /** Cartão com 3DS: o banco pediu confirmação antes do resultado. */
@@ -375,6 +377,12 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
               );
             })}
           </div>
+          {assinaturaNoMercadoPago ? (
+            <p className="mt-3 text-sm text-ja-muted">
+              O cartão é cadastrado na página do Mercado Pago. Entre lá com o e-mail do administrador
+              {valores.adminEmail.trim() ? ` (${valores.adminEmail.trim()})` : ""}: a assinatura só é aceita com ele.
+            </p>
+          ) : null}
         </fieldset>
       ) : null}
 
@@ -401,11 +409,13 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
               ? "Enviando…"
               : !pago && etapa === 1
                 ? "Continuar"
-                : pedeCartao
-                  ? "Continuar para o cartão"
-                  : pago
-                    ? "Gerar Pix"
-                    : "Começar 7 dias grátis"}
+                : assinaturaNoMercadoPago
+                  ? "Continuar no Mercado Pago"
+                  : pedeCartao
+                    ? "Continuar para o cartão"
+                    : pago
+                      ? "Gerar Pix"
+                      : "Começar 7 dias grátis"}
           </button>
         )}
         <Link href="/#planos" className="text-sm font-medium text-ja-muted hover:text-ja-ink">
@@ -433,9 +443,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
       <div ref={cartaoRef} className="mt-4 scroll-mt-6 rounded-2xl border border-ja-line bg-ja-card p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-wider text-ja-teal">Cartão de crédito</p>
         <p className="mt-2 text-sm text-ja-muted">
-          {anual
-            ? `${reais(preco)} pelo ano, à vista ou em até 12x no cartão.`
-            : `${reais(preco)} à vista, referente ao primeiro mês. Os próximos meses são pagos pelo sistema, no cartão ou no Pix.`}
+          {`${reais(preco)} pelo ano, à vista ou em até 12x no cartão.`}
         </p>
         <div className="mt-4">
           <CartaoMercadoPago
