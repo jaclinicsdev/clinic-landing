@@ -448,7 +448,12 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
       </div>
     </form>
     {desafio ? (
-      <ConfirmacaoBanco url={desafio.url} onConcluida={() => router.push(desafio.retorno)} />
+      <ConfirmacaoBanco
+        url={desafio.url}
+        onConcluida={() =>
+          router.push(`${desafio.retorno}${desafio.retorno.includes("?") ? "&" : "?"}origem=banco`)
+        }
+      />
     ) : null}
     {recuo ? (
       <div ref={cartaoRef} className="mt-4 scroll-mt-6 rounded-2xl border border-ja-line bg-ja-card p-6 sm:p-8">

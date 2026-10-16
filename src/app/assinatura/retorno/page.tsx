@@ -12,6 +12,7 @@ function RetornoPagamento() {
   const params = useSearchParams();
   const pedido = params.get("pedido") ?? "";
   const resultado = params.get("resultado");
+  const veioDoBanco = params.get("origem") === "banco";
   const [estado, setEstado] = React.useState<"aguardando" | "pago" | "pendente" | "erro">("aguardando");
   const [mensagem, setMensagem] = React.useState("Confirmando o pagamento…");
   const [email, setEmail] = React.useState("");
@@ -96,7 +97,9 @@ function RetornoPagamento() {
         ) : null}
         {estadoTela === "pendente" && (resultado === "pendente" || !resultado) ? (
           <p className="mt-3 text-sm text-ja-muted">
-            Assim que o Mercado Pago confirmar, o acesso chega no e-mail do administrador. Você pode fechar esta página.
+            {veioDoBanco
+              ? "Se você já confirmou com o banco, o acesso chega no e-mail do administrador em alguns minutos. Nada é cobrado antes dessa confirmação. Você pode fechar esta página."
+              : "Assim que o Mercado Pago confirmar, o acesso chega no e-mail do administrador. Você pode fechar esta página."}
           </p>
         ) : null}
         <div className="mt-6">
