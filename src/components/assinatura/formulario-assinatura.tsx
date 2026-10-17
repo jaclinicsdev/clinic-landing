@@ -455,8 +455,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
           </div>
           {assinaturaNoMercadoPago ? (
             <p className="mt-3 text-sm text-ja-muted">
-              O cartão é cadastrado na página do Mercado Pago. Entre lá com o e-mail do administrador
-              {valores.adminEmail.trim() ? ` (${valores.adminEmail.trim()})` : ""}: a assinatura só é aceita com ele.
+              O cartão é cadastrado na página do Mercado Pago, na conta de quem está pagando.
             </p>
           ) : null}
         </fieldset>
@@ -547,11 +546,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
         <p className="text-xs font-bold uppercase tracking-wider text-ja-teal">Cartão de crédito</p>
         <p className="mt-2 text-sm text-ja-ink">
           O Mercado Pago pediu para confirmar o cartão na página dele. A primeira mensalidade é cobrada lá e as próximas,
-          todo mês.
-        </p>
-        <p className="mt-2 text-sm text-ja-muted">
-          Entre no Mercado Pago com o e-mail do administrador
-          {valores.adminEmail.trim() ? ` (${valores.adminEmail.trim()})` : ""}: a assinatura só é aceita com ele.
+          todo mês. O cartão fica na conta de quem está pagando.
         </p>
         <button
           type="button"
