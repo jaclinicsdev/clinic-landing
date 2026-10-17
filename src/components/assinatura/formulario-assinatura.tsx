@@ -10,6 +10,7 @@ import { modoAssinaturaCartao, type ModoAssinaturaCartao } from "@/lib/mercado-p
 import { ConfirmacaoBanco } from "@/components/assinatura/confirmacao-banco";
 import { PixMercadoPago, type PixGerado } from "@/components/assinatura/pix-mercado-pago";
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
+import { normalizarCodigoCupom, valorComDesconto } from "@/lib/cupom";
 import { linkDoSistema, reais, urlApi } from "@/lib/planos-publicos";
 import { campoDoErro, cnpjValido, MENSAGEM_CNPJ, MENSAGEM_TELEFONE, telefoneValido } from "@/lib/validacao";
 
@@ -112,8 +113,52 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
   const [desafio, setDesafio] = React.useState<{ url: string; retorno: string } | null>(null);
   /** Validação do cartão recusada no formulário: a assinatura é concluída na página do Mercado Pago. */
   const [recuo, setRecuo] = React.useState<string | null>(null);
+  const [cupomDigitado, setCupomDigitado] = React.useState("");
+  const [cupom, setCupom] = React.useState<{ codigo: string; percentual: number } | null>(null);
+  const [validandoCupom, setValidandoCupom] = React.useState(false);
   const cartaoRef = React.useRef<HTMLDivElement>(null);
   const login = linkDoSistema("/login");
+  const precoFinal = pago && cupom ? valorComDesconto(preco, cupom.percentual) : preco;
+
+  function aoDigitarCupom(valor: string) {
+    setCupomDigitado(valor);
+    const normalizado = normalizarCodigoCupom(valor);
+    setCupom((atual) => (atual && atual.codigo === normalizado ? atual : null));
+  }
+
+  async function aplicarCupom() {
+    const codigo = normalizarCodigoCupom(cupomDigitado);
+    if (!codigo) {
+      setCupom(null);
+      return;
+    }
+    setValidandoCupom(true);
+    try {
+      const base = urlApi("/assinatura/cupom");
+      if (!base) throw new Error("O endereço da API não está configurado.");
+      const resposta = await fetch(base, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigo }),
+      });
+      const json = (await resposta.json().catch(() => null)) as { codigo?: string; percentual?: number; message?: string } | null;
+      if (!resposta.ok || !json?.codigo || typeof json.percentual !== "number") {
+        throw new Error(json?.message || "Cupom inválido ou inativo.");
+      }
+      if (valorComDesconto(preco, json.percentual) < 1) {
+        setCupom(null);
+        toast.error("Este cupom deixa a assinatura abaixo de R$ 1,00.");
+        return;
+      }
+      setCupom({ codigo: json.codigo, percentual: json.percentual });
+      setCupomDigitado(json.codigo);
+    } catch (err) {
+      setCupom(null);
+      toast.error(mensagemDoErro(err, "Cupom inválido ou inativo."));
+    } finally {
+      setValidandoCupom(false);
+    }
+  }
 
   React.useEffect(() => {
     let ativo = true;
@@ -194,6 +239,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
       ciclo: pago ? ciclo : "mensal",
       ...(escolheMeio ? { meio } : {}),
       ...(cartao ? { cartao } : {}),
+      ...(pago && cupom ? { cupom: cupom.codigo } : {}),
       clinica: {
         nomeFantasia: valores.nomeFantasia,
         razaoSocial: valores.razaoSocial,
@@ -299,7 +345,13 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
       <h1 className="mt-2 text-2xl font-bold tracking-tight">
         {nomePlano}
         <span className="ml-2 text-base font-semibold text-ja-muted">
-          {reais(preco)}
+          {cupom ? (
+            <>
+              <span className="line-through">{reais(preco)}</span> {reais(precoFinal)}
+            </>
+          ) : (
+            reais(preco)
+          )}
           {anual ? " por ano" : "/mês"}
         </span>
       </h1>
@@ -410,6 +462,41 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
         </fieldset>
       ) : null}
 
+      {pago ? (
+        <div className="mt-6">
+          <label htmlFor="cupom" className="text-xs font-semibold uppercase tracking-wider text-ja-ink">
+            Cupom
+          </label>
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+            <input
+              id="cupom"
+              value={cupomDigitado}
+              onChange={(evento) => aoDigitarCupom(evento.target.value)}
+              placeholder="Código"
+              autoCapitalize="characters"
+              className={`${CAMPO} border-ja-line focus:ring-ja-teal sm:max-w-xs`}
+            />
+            <button
+              type="button"
+              onClick={() => void aplicarCupom()}
+              disabled={validandoCupom}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ja-line px-5 text-sm font-semibold text-ja-ink hover:bg-ja-surface disabled:opacity-60"
+            >
+              {validandoCupom ? "Conferindo…" : "Aplicar"}
+            </button>
+          </div>
+          {cupom ? (
+            <p className="mt-2 text-sm text-ja-ink">
+              {cupom.codigo}: {cupom.percentual}% de desconto nesta assinatura.
+            </p>
+          ) : cupomDigitado.trim() ? (
+            <p className="mt-2 text-xs text-ja-muted">Toque em Aplicar para usar este cupom.</p>
+          ) : (
+            <p className="mt-2 text-xs text-ja-muted">Opcional. Só entra se o cupom estiver ativo.</p>
+          )}
+        </div>
+      ) : null}
+
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {!pago && etapa === 2 ? (
           <button
@@ -481,7 +568,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
           <PixMercadoPago
             pedidoId={pix.pedidoId}
             pix={pix.pix}
-            valor={preco}
+            valor={precoFinal}
             onConcluido={() => router.push(`/assinatura/retorno?pedido=${pix.pedidoId}`)}
             onVoltar={() => setPix(null)}
           />
@@ -492,12 +579,12 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, ini
         <p className="text-xs font-bold uppercase tracking-wider text-ja-teal">Cartão de crédito</p>
         <p className="mt-2 text-sm text-ja-muted">
           {anual
-            ? `${reais(preco)} pelo ano, à vista ou em até 12x no cartão.`
-            : `${reais(preco)} agora e depois todo mês, no cartão. Dá para desligar a cobrança automática quando quiser.`}
+            ? `${reais(precoFinal)} pelo ano, à vista ou em até 12x no cartão.`
+            : `${reais(precoFinal)} agora e depois todo mês, no cartão. Dá para desligar a cobrança automática quando quiser.`}
         </p>
         <div className="mt-4">
           <CartaoMercadoPago
-            valor={preco}
+            valor={precoFinal}
             email={valores.adminEmail.trim()}
             parcelasMaximas={anual ? 12 : 1}
             onCartao={pagarComCartao}
