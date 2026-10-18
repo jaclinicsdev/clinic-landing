@@ -17,7 +17,7 @@ export default async function AssinarPage({
   const planos = await listarPlanosPublicos();
   const plano = planos?.find((item) => item.codigo === params.plano);
   const precoAnual = Number(plano?.precoAnual);
-  if (!modo || !plano || plano.precoMensal <= 0) notFound();
+  if (!planos || !modo || !plano || plano.precoMensal <= 0) notFound();
   if (modo === "pago" && ciclo === "anual" && !(precoAnual > 0)) notFound();
 
   if (modo === "gratuito") {
@@ -31,13 +31,14 @@ export default async function AssinarPage({
   const preco = modo === "pago" && ciclo === "anual" ? precoAnual : plano.precoMensal;
 
   return (
-    <MolduraAssinatura>
+    <MolduraAssinatura larga>
       <FormularioAssinatura
         plano={plano.codigo}
         nomePlano={plano.nome}
         preco={preco}
         modo={modo}
         ciclo={ciclo}
+        planos={planos.filter((item) => item.precoMensal > 0)}
         iniciais={{
           adminNome: params.nome,
           adminEmail: params.email,

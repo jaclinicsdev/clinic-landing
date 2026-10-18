@@ -134,16 +134,6 @@ export function PixMercadoPago({ pedidoId, pix, valor, onConcluido, onVoltar }: 
           >
             {copiado ? "Código copiado" : "Copiar código Pix"}
           </button>
-          {!pix.qrCodeBase64 && pix.ticketUrl ? (
-            <a
-              href={pix.ticketUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 block text-sm font-semibold text-ja-teal underline-offset-4 hover:underline sm:ml-4 sm:mt-0 sm:inline"
-            >
-              Ver o QR Code
-            </a>
-          ) : null}
         </div>
       </div>
       <div className="mt-5 flex flex-col gap-2 border-t border-ja-line pt-3 sm:flex-row sm:items-center sm:justify-between">
