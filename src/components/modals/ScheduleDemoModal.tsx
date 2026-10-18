@@ -127,7 +127,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
       }
       if (!aceitouTermos) {
         setTermosInvalidos(true);
-        toast.error("Marque “Declaro que aceito os termos” para continuar.");
+        toast.error("Marque “Declaro que aceito os termos de uso” para continuar.");
         return;
       }
       setClinica((atual) => ({

@@ -27,9 +27,7 @@ export function AceiteTermos({
   return (
     <>
       <label
-        className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-3.5 text-sm ${
-          invalido ? "border-red-500 bg-red-50 dark:bg-red-950/30" : "border-ja-line bg-ja-surface"
-        }`}
+        className={`flex min-h-11 cursor-pointer items-center gap-2.5 text-sm ${invalido ? "text-red-600" : ""}`}
       >
         <input
           id="aceite-termos"
@@ -46,7 +44,7 @@ export function AceiteTermos({
             onClick={abrirTermos}
             className="font-semibold text-ja-teal underline underline-offset-2"
           >
-            termos
+            termos de uso
           </button>
         </span>
       </label>

@@ -251,7 +251,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
   function exigirTermos() {
     if (aceitouTermos) return true;
     setTermosInvalidos(true);
-    toast.error("Marque “Declaro que aceito os termos” para continuar.");
+    toast.error("Marque “Declaro que aceito os termos de uso” para continuar.");
     window.setTimeout(() => document.getElementById("aceite-termos")?.focus(), 0);
     return false;
   }
@@ -285,7 +285,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
   /** Cartão do formulário: confere os dados de novo (podem ter mudado) e envia. Lança para o cartão aceitar outra tentativa. */
   async function pagarComCartao(cartao: CartaoDoFormulario) {
     if (!conferir(["cnpj", "telefone"])) throw new Error("Confira os dados da clínica.");
-    if (!exigirTermos()) throw new Error("Marque “Declaro que aceito os termos”.");
+    if (!exigirTermos()) throw new Error("Marque “Declaro que aceito os termos de uso”.");
     const ok = await concluir(cartao);
     if (!ok) throw new Error("Pagamento não concluído.");
   }
