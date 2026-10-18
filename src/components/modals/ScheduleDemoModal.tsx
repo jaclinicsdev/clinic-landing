@@ -233,7 +233,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
               <p className="mt-1 max-w-md text-sm text-white/70">
                 {resultado
                   ? resultado.acessoEnviado
-                    ? "A senha do administrador já foi enviada por e-mail."
+                    ? "O acesso de 7 dias já está pronto."
                     : "A clínica foi aberta, mas o e-mail não saiu."
                   : etapa === 1
                     ? "Quem vai administrar a clínica. A senha chega neste e-mail."
@@ -249,21 +249,38 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
             </div>
 
             {resultado ? (
-              <div className="space-y-5 px-5 py-6 sm:px-7">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ja-teal/10 text-ja-teal">
-                  <Check className="h-6 w-6" />
+              <div className="px-5 py-5 sm:px-7 sm:py-6">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ja-teal text-white">
+                    <Check className="h-5 w-5" />
+                  </span>
+                  <p className="pt-2 text-sm leading-relaxed text-ja-ink">{resultado.mensagem}</p>
                 </div>
-                <p className="text-sm leading-relaxed text-ja-muted">{resultado.mensagem}</p>
-                <p className="text-sm text-ja-ink">
-                  Entre no sistema com <span className="font-semibold">{resultado.email}</span>.
-                </p>
+
+                <div className="mt-4 rounded-2xl border border-ja-line bg-ja-surface px-4 py-3.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ja-muted">E-mail de acesso</p>
+                  <p className="mt-1 flex items-center gap-2 break-all text-sm font-semibold text-ja-ink">
+                    <Mail className="h-4 w-4 shrink-0 text-ja-teal" />
+                    {resultado.email}
+                  </p>
+                  <p className="mt-2 text-xs text-ja-muted">
+                    Plano {planoAtual?.nome ?? "escolhido"} · 7 dias · senha no e-mail
+                  </p>
+                </div>
+
                 {login ? (
                   <a
                     href={login}
-                    className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-ja-teal text-sm font-semibold text-white transition-colors hover:bg-ja-teal-hover"
+                    className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-ja-teal text-sm font-semibold text-white transition-colors hover:bg-ja-teal-hover"
                   >
                     Ir para o sistema
+                    <ArrowRight className="h-4 w-4" />
                   </a>
+                ) : null}
+                {resultado.acessoEnviado ? (
+                  <p className="mt-3 text-center text-xs text-ja-muted">
+                    Se o e-mail demorar, confira também a caixa de spam.
+                  </p>
                 ) : null}
               </div>
             ) : (
