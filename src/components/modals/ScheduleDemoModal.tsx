@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AceiteTermos } from "@/components/assinatura/aceite-termos";
 import { BRAND } from "@/lib/brand";
 import { PLANOS, type PlanoComercial } from "@/lib/planos";
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
@@ -59,6 +60,8 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
   const [etapa, setEtapa] = useState<1 | 2>(1);
   const [enviando, setEnviando] = useState(false);
   const [invalido, setInvalido] = useState<CampoConferido | null>(null);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
+  const [termosInvalidos, setTermosInvalidos] = useState(false);
   const [resultado, setResultado] = useState<{ mensagem: string; email: string; acessoEnviado: boolean } | null>(null);
   const [contato, setContato] = useState({
     nome: iniciais?.nome?.trim() || "",
@@ -80,6 +83,8 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
     if (!estavaAberto.current) {
       setEtapa(1);
       setInvalido(null);
+      setAceitouTermos(false);
+      setTermosInvalidos(false);
       setResultado(null);
       setPlano(planoInicial ?? "profissional");
     }
@@ -118,6 +123,11 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
     if (etapa === 1) {
       if (!telefoneValido(contato.telefone)) {
         apontar("telefone", MENSAGEM_TELEFONE);
+        return;
+      }
+      if (!aceitouTermos) {
+        setTermosInvalidos(true);
+        toast.error("Marque “Declaro que aceito os termos” para continuar.");
         return;
       }
       setClinica((atual) => ({
@@ -394,7 +404,18 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                   )}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-3 border-t border-ja-line bg-ja-card px-5 py-4 sm:px-7">
+                <div className="shrink-0 space-y-3 border-t border-ja-line bg-ja-card px-5 py-4 sm:px-7">
+                  {etapa === 1 ? (
+                    <AceiteTermos
+                      marcado={aceitouTermos}
+                      invalido={termosInvalidos}
+                      onChange={(marcado) => {
+                        setAceitouTermos(marcado);
+                        if (marcado) setTermosInvalidos(false);
+                      }}
+                    />
+                  ) : null}
+                  <div className="flex items-center gap-3">
                   {etapa === 2 ? (
                     <button
                       type="button"
@@ -416,6 +437,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                     {enviando ? "Enviando…" : etapa === 1 ? "Continuar" : "Começar 7 dias grátis"}
                     <ArrowRight className="h-4 w-4" />
                   </button>
+                  </div>
                 </div>
               </form>
             )}

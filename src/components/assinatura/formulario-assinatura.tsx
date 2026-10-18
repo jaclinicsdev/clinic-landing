@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { AceiteTermos } from "@/components/assinatura/aceite-termos";
 import { CartaoMercadoPago, type CartaoDoFormulario } from "@/components/assinatura/cartao-mercado-pago";
 import { ConfirmacaoBanco } from "@/components/assinatura/confirmacao-banco";
 import { PixMercadoPago, type PixGerado } from "@/components/assinatura/pix-mercado-pago";
@@ -105,6 +106,8 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
   });
   const [selecao, setSelecao] = React.useState({ codigo: plano, ciclo });
   const [invalido, setInvalido] = React.useState<CampoConferido | null>(null);
+  const [aceitouTermos, setAceitouTermos] = React.useState(false);
+  const [termosInvalidos, setTermosInvalidos] = React.useState(false);
   const [enviando, setEnviando] = React.useState(false);
   const [resultado, setResultado] = React.useState<Resultado | null>(null);
   const [etapa, setEtapa] = React.useState<1 | 2>(1);
@@ -245,10 +248,19 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
     return true;
   }
 
+  function exigirTermos() {
+    if (aceitouTermos) return true;
+    setTermosInvalidos(true);
+    toast.error("Marque “Declaro que aceito os termos” para continuar.");
+    window.setTimeout(() => document.getElementById("aceite-termos")?.focus(), 0);
+    return false;
+  }
+
   function aoEnviar(evento: React.FormEvent) {
     evento.preventDefault();
     if (!pago && etapa === 1) {
       if (!conferir(["telefone"])) return;
+      if (!exigirTermos()) return;
       setValores((atual) => ({
         ...atual,
         emailClinica: atual.emailClinica.trim() || atual.adminEmail.trim(),
@@ -257,6 +269,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       return;
     }
     if (!conferir(["cnpj", "telefone"])) return;
+    if (!exigirTermos()) return;
     if (pedeCartao) {
       setCartaoAberto(true);
       rolarAtePagamento();
@@ -272,6 +285,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
   /** Cartão do formulário: confere os dados de novo (podem ter mudado) e envia. Lança para o cartão aceitar outra tentativa. */
   async function pagarComCartao(cartao: CartaoDoFormulario) {
     if (!conferir(["cnpj", "telefone"])) throw new Error("Confira os dados da clínica.");
+    if (!exigirTermos()) throw new Error("Marque “Declaro que aceito os termos”.");
     const ok = await concluir(cartao);
     if (!ok) throw new Error("Pagamento não concluído.");
   }
@@ -599,7 +613,20 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
         </fieldset>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
+      {pago || etapa === 1 ? (
+        <div className="mt-6">
+          <AceiteTermos
+            marcado={aceitouTermos}
+            invalido={termosInvalidos}
+            onChange={(marcado) => {
+              setAceitouTermos(marcado);
+              if (marcado) setTermosInvalidos(false);
+            }}
+          />
+        </div>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         {!pago && etapa === 2 ? (
           <button
             type="button"

@@ -52,9 +52,13 @@ export const PLANOS: PlanoComercial[] = [
     nome: "Ilimitado",
     destaque: false,
     resumo: "Para confirmar a agenda sozinha e reservar os módulos avançados.",
-    limites: ["Usuários sem limite", "Unidades sem limite"],
+    limites: ["Usuários sem limite", "Unidades sem limite", "20h de implementação"],
     itens: [
       { texto: "Tudo do Profissional", status: "disponivel" },
+      {
+        texto: "20 horas de implementação: nossa equipe prepara o ambiente para a clínica usar o sistema",
+        status: "disponivel",
+      },
       { texto: "Lembretes de consulta por WhatsApp e e-mail", status: "disponivel" },
       { texto: "Power BI", status: "desenvolvimento" },
       { texto: "Agente de IA", status: "desenvolvimento" },

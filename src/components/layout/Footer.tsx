@@ -102,6 +102,9 @@ export function Footer() {
             <a href={`mailto:${CONTACT_CONFIG.email}`} className="hover:text-white/70 transition-colors">
               Contato
             </a>
+            <a href="/termos" className="hover:text-white/70 transition-colors">
+              Termos de uso
+            </a>
             <button
               onClick={scrollToTop}
               className="min-h-11 min-w-11 px-3 rounded-xl bg-white/8 hover:bg-white/14 text-white/80 transition-colors inline-flex items-center justify-center gap-1.5"
