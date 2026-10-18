@@ -87,6 +87,12 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
       setTermosInvalidos(false);
       setResultado(null);
       setPlano(planoInicial ?? "profissional");
+      setContato({
+        nome: iniciais?.nome?.trim() || "",
+        email: iniciais?.email?.trim() || "",
+        telefone: formatarTelefone(iniciais?.telefone?.trim() || ""),
+      });
+      setClinica(CLINICA_VAZIA);
     }
     estavaAberto.current = true;
     return () => {
@@ -289,7 +295,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                 ) : null}
               </div>
             ) : (
-              <form onSubmit={avancar}>
+              <form onSubmit={avancar} autoComplete="off">
                 <div className="space-y-4 px-5 py-5 sm:px-7">
                   {etapa === 1 ? (
                     <>
@@ -297,7 +303,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                         <input
                           required
                           minLength={3}
-                          autoComplete="name"
+                          autoComplete="off"
                           value={contato.nome}
                           onChange={(evento) => alterarContato("nome", evento.target.value)}
                           placeholder="Ex: Dra. Juliana Santos"
@@ -310,7 +316,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                             id="demo-email"
                             required
                             type="email"
-                            autoComplete="email"
+                            autoComplete="off"
                             value={contato.email}
                             aria-invalid={invalido === "email" || undefined}
                             onChange={(evento) => alterarContato("email", evento.target.value)}
@@ -323,7 +329,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                             id="demo-telefone"
                             required
                             type="tel"
-                            autoComplete="tel"
+                            autoComplete="off"
                             value={contato.telefone}
                             aria-invalid={invalido === "telefone" || undefined}
                             onChange={(evento) => alterarContato("telefone", evento.target.value)}
