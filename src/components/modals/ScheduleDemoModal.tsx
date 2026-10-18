@@ -20,7 +20,7 @@ import { BRAND } from "@/lib/brand";
 import { PLANOS, type PlanoComercial } from "@/lib/planos";
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
 import { linkDoSistema, urlApi } from "@/lib/planos-publicos";
-import { campoDoErro, cnpjValido, MENSAGEM_CNPJ, MENSAGEM_TELEFONE, telefoneValido } from "@/lib/validacao";
+import { avisoDeEmail, campoDoErro, cnpjValido, MENSAGEM_CNPJ, MENSAGEM_TELEFONE, telefoneValido } from "@/lib/validacao";
 
 interface ScheduleDemoModalProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ const CAMPO_BASE =
 const CAMPO = `${CAMPO_BASE} border-ja-line focus:ring-ja-teal`;
 const CAMPO_INVALIDO = `${CAMPO_BASE} border-red-500 focus:ring-red-500`;
 
-type CampoConferido = "telefone" | "cnpj";
+type CampoConferido = "telefone" | "cnpj" | "email";
 
 /** Falha de rede vira mensagem em português; erro da API já vem pronto para a tela. */
 function mensagemDoErro(err: unknown, padrao: string) {
@@ -113,7 +113,7 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
   /** Marca o campo, avisa no toast e leva o cursor até ele (o telefone fica na primeira etapa). */
   function apontar(campo: CampoConferido, mensagem: string) {
     setInvalido(campo);
-    if (campo === "telefone") setEtapa(1);
+    if (campo === "telefone" || campo === "email") setEtapa(1);
     toast.error(mensagem);
     window.setTimeout(() => document.getElementById(`demo-${campo}`)?.focus(), 50);
   }
@@ -123,6 +123,11 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
     if (etapa === 1) {
       if (!telefoneValido(contato.telefone)) {
         apontar("telefone", MENSAGEM_TELEFONE);
+        return;
+      }
+      const avisoEmail = avisoDeEmail(contato.email);
+      if (avisoEmail) {
+        apontar("email", avisoEmail);
         return;
       }
       if (!aceitouTermos) {
@@ -302,13 +307,15 @@ export function ScheduleDemoModal({ isOpen, onClose, planoInicial, iniciais }: S
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <CampoIcone icone={Mail} rotulo="E-mail">
                           <input
+                            id="demo-email"
                             required
                             type="email"
                             autoComplete="email"
                             value={contato.email}
+                            aria-invalid={invalido === "email" || undefined}
                             onChange={(evento) => alterarContato("email", evento.target.value)}
                             placeholder="juliana@clinica.com.br"
-                            className={CAMPO}
+                            className={invalido === "email" ? CAMPO_INVALIDO : CAMPO}
                           />
                         </CampoIcone>
                         <CampoIcone icone={Phone} rotulo="WhatsApp">

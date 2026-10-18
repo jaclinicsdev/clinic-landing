@@ -12,7 +12,7 @@ import { PixMercadoPago, type PixGerado } from "@/components/assinatura/pix-merc
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
 import { normalizarCodigoCupom, valorComDesconto } from "@/lib/cupom";
 import { linkDoSistema, reais, urlApi, type PlanoPublico } from "@/lib/planos-publicos";
-import { campoDoErro, cnpjValido, MENSAGEM_CNPJ, MENSAGEM_TELEFONE, telefoneValido } from "@/lib/validacao";
+import { avisoDeEmail, campoDoErro, cnpjValido, MENSAGEM_CNPJ, MENSAGEM_TELEFONE, telefoneValido } from "@/lib/validacao";
 
 interface FormularioAssinaturaProps {
   plano: string;
@@ -85,7 +85,7 @@ interface PixNaTela {
   pix: PixGerado;
 }
 
-type CampoConferido = "telefone" | "cnpj";
+type CampoConferido = "telefone" | "cnpj" | "email";
 
 const CAMPO =
   "mt-1.5 w-full rounded-xl border bg-ja-surface px-3 py-2.5 text-sm text-ja-ink focus:border-transparent focus:outline-none focus:ring-2";
@@ -223,14 +223,15 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
     const formatado =
       campo === "telefone" ? formatarTelefone(valor) : campo === "cnpj" ? formatarCnpj(valor) : valor;
     setValores((atual) => ({ ...atual, [campo]: formatado }));
-    if (campo === invalido) setInvalido(null);
+    if (campo === invalido || (campo === "adminEmail" && invalido === "email")) setInvalido(null);
   }
 
   /** Marca o campo, avisa no toast e leva o cursor até ele. */
   function apontar(campo: CampoConferido, mensagem: string) {
     setInvalido(campo);
     toast.error(mensagem);
-    window.setTimeout(() => document.getElementById(campo)?.focus(), 0);
+    const foco = campo === "email" ? "e-mail-do-administrador" : campo;
+    window.setTimeout(() => document.getElementById(foco)?.focus(), 0);
   }
 
   /** Confere telefone e CNPJ antes de enviar (na ordem em que aparecem na tela). */
@@ -243,6 +244,13 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       if (campo === "telefone" && !telefoneValido(valores.telefone)) {
         apontar("telefone", MENSAGEM_TELEFONE);
         return false;
+      }
+      if (campo === "email") {
+        const aviso = avisoDeEmail(valores.adminEmail);
+        if (aviso) {
+          apontar("email", aviso);
+          return false;
+        }
       }
     }
     return true;
@@ -259,7 +267,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
   function aoEnviar(evento: React.FormEvent) {
     evento.preventDefault();
     if (!pago && etapa === 1) {
-      if (!conferir(["telefone"])) return;
+      if (!conferir(["email", "telefone"])) return;
       if (!exigirTermos()) return;
       setValores((atual) => ({
         ...atual,
@@ -268,7 +276,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       setEtapa(2);
       return;
     }
-    if (!conferir(["cnpj", "telefone"])) return;
+    if (!conferir(["email", "cnpj", "telefone"])) return;
     if (!exigirTermos()) return;
     if (pedeCartao) {
       setCartaoAberto(true);
@@ -284,7 +292,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
 
   /** Cartão do formulário: confere os dados de novo (podem ter mudado) e envia. Lança para o cartão aceitar outra tentativa. */
   async function pagarComCartao(cartao: CartaoDoFormulario) {
-    if (!conferir(["cnpj", "telefone"])) throw new Error("Confira os dados da clínica.");
+    if (!conferir(["email", "cnpj", "telefone"])) throw new Error("Confira os dados da clínica.");
     if (!exigirTermos()) throw new Error("Marque “Declaro que aceito os termos de uso”.");
     const ok = await concluir(cartao);
     if (!ok) throw new Error("Pagamento não concluído.");
@@ -558,6 +566,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
                 rotulo="E-mail do administrador"
                 tipo="email"
                 valor={valores.adminEmail}
+                invalido={invalido === "email"}
                 onChange={(valor) => alterar("adminEmail", valor)}
               />
               <p className="mt-1 text-xs text-ja-muted">O acesso é enviado para este e-mail.</p>

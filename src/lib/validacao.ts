@@ -10,6 +10,34 @@ export const MENSAGEM_TELEFONE =
   "Telefone inválido. Informe o DDD e o número completo: celular tem 9 dígitos, como (11) 98765-4321.";
 export const MENSAGEM_CNPJ = "CNPJ inválido. Confira os 14 números.";
 
+/** A mesma lista da API: erro comum de digitação, avisado antes de abrir a clínica. */
+const CORRECOES_EMAIL: Record<string, string> = {
+  "gmial.com": "gmail.com",
+  "gmal.com": "gmail.com",
+  "gamil.com": "gmail.com",
+  "gmail.co": "gmail.com",
+  "gmail.con": "gmail.com",
+  "gnail.com": "gmail.com",
+  "hotmal.com": "hotmail.com",
+  "hotmial.com": "hotmail.com",
+  "hotmail.co": "hotmail.com",
+  "hotmai.com": "hotmail.com",
+  "outlok.com": "outlook.com",
+  "outloo.com": "outlook.com",
+  "outlook.co": "outlook.com",
+  "yahooo.com": "yahoo.com",
+  "yaho.com": "yahoo.com",
+  "icloud.co": "icloud.com",
+  "live.co": "live.com",
+};
+
+export function avisoDeEmail(email: string): string | null {
+  const [local, dominio] = email.trim().toLowerCase().split("@");
+  if (!local || !dominio || email.split("@").length !== 2) return null;
+  const correto = CORRECOES_EMAIL[dominio];
+  return correto ? `Esse e-mail parece ter um erro. Você quis dizer ${local}@${correto}?` : null;
+}
+
 function todosDigitosIguais(digitos: string): boolean {
   return /^(\d)\1+$/.test(digitos);
 }
@@ -43,8 +71,9 @@ export function telefoneValido(valor: string): boolean {
 }
 
 /** Erro da API que fala de um campo: para marcar e focar o campo certo. */
-export function campoDoErro(mensagem: string): "telefone" | "cnpj" | null {
+export function campoDoErro(mensagem: string): "telefone" | "cnpj" | "email" | null {
   if (/telefone/i.test(mensagem)) return "telefone";
   if (/cnpj/i.test(mensagem)) return "cnpj";
+  if (/e-mail/i.test(mensagem)) return "email";
   return null;
 }
