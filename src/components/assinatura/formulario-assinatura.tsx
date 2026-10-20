@@ -6,8 +6,6 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { AceiteTermos } from "@/components/assinatura/aceite-termos";
-import { CartaoMercadoPago, type CartaoDoFormulario } from "@/components/assinatura/cartao-mercado-pago";
-import { ConfirmacaoBanco } from "@/components/assinatura/confirmacao-banco";
 import { PixMercadoPago, type PixGerado } from "@/components/assinatura/pix-mercado-pago";
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
 import { normalizarCodigoCupom, valorComDesconto } from "@/lib/cupom";
@@ -48,14 +46,17 @@ const VAZIO = {
 
 type Meio = "cartao" | "pix";
 
-/** Endereço do Mercado Pago. O pagamento avulso não sai do site; só a cobrança automática vai para lá. */
-function saiDoSistema(url: string) {
-  if (url.startsWith("/") && !url.startsWith("//")) return false;
+/** Página do Mercado Pago (endereço https), onde o cartão é pago. */
+function paginaDoMercadoPago(url: string) {
   try {
-    const host = new URL(url).hostname.toLowerCase();
-    return host.includes("mercadopago") || host.includes("mercadolibre") || host.endsWith("mlstatic.com");
+    const endereco = new URL(url);
+    const host = endereco.hostname.toLowerCase();
+    return (
+      endereco.protocol === "https:" &&
+      (host.includes("mercadopago") || host.includes("mercadolibre") || host.endsWith("mlstatic.com"))
+    );
   } catch {
-    return true;
+    return false;
   }
 }
 
@@ -66,7 +67,7 @@ function meios(anual: boolean): { valor: Meio; rotulo: string; detalhe: string }
       valor: "cartao",
       rotulo: "Cartão de crédito",
       detalhe: anual
-        ? "À vista ou em até 12x, nesta página."
+        ? "À vista ou em até 12x, na página do Mercado Pago."
         : "Cadastrado no Mercado Pago e cobrado todo mês. Dá para desligar quando quiser.",
     },
     {
@@ -113,15 +114,12 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
   const [etapa, setEtapa] = React.useState<1 | 2>(1);
   const [meio, setMeio] = React.useState<Meio>("cartao");
   const pago = modo === "pago";
-  const [cartaoAberto, setCartaoAberto] = React.useState(false);
   const [pix, setPix] = React.useState<PixNaTela | null>(null);
-  /** Cartão com 3DS: o banco pediu confirmação antes do resultado. */
-  const [desafio, setDesafio] = React.useState<{ url: string; retorno: string } | null>(null);
   const [cupomDigitado, setCupomDigitado] = React.useState("");
   const [cupom, setCupom] = React.useState<{ codigo: string; percentual: number } | null>(null);
   const [querCupom, setQuerCupom] = React.useState(false);
   const [validandoCupom, setValidandoCupom] = React.useState(false);
-  const cartaoRef = React.useRef<HTMLDivElement>(null);
+  const pixRef = React.useRef<HTMLDivElement>(null);
   const login = linkDoSistema("/login");
   const catalogo = planos.filter((item) => item.precoMensal > 0);
   const planoEscolhido =
@@ -143,10 +141,10 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
   const precoFinal = pago && cupom ? valorComDesconto(precoEscolhido, cupom.percentual) : precoEscolhido;
   // Mensal no cartão: cobrança automática. Anual no cartão: em até 12x. Pix: QR Code aqui mesmo.
   const escolheMeio = pago;
+  // Cartão: pago na página do Mercado Pago. No anual, é o checkout dele, à vista ou em até 12x.
+  const cartaoNoMercadoPago = escolheMeio && meio === "cartao";
   // Mensal no cartão: o cartão é cadastrado na página de assinatura do Mercado Pago, que cobra todo mês.
-  const assinaturaNoMercadoPago = escolheMeio && meio === "cartao" && !anual;
-  // Anual no cartão: digitado aqui no formulário do Mercado Pago, sem sair do site.
-  const pedeCartao = escolheMeio && meio === "cartao" && anual;
+  const assinaturaNoMercadoPago = cartaoNoMercadoPago && !anual;
 
   function aoDigitarCupom(valor: string) {
     setCupomDigitado(valor);
@@ -214,7 +212,6 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
     const cicloFinal = novoCiclo === "anual" && destino.precoAnual > 0 ? "anual" : "mensal";
     setSelecao({ codigo, ciclo: cicloFinal });
     setPix(null);
-    setCartaoAberto(false);
     const params = new URLSearchParams(window.location.search);
     params.set("plano", codigo);
     params.set("modo", modo);
@@ -289,28 +286,14 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
     }
     if (!conferir(["email", "cnpj", "telefone"])) return;
     if (!exigirTermos()) return;
-    if (pedeCartao) {
-      setCartaoAberto(true);
-      rolarAtePagamento();
-      return;
-    }
-    // Mensal no cartão não abre o formulário do cartão: a API devolve a página de assinatura do Mercado Pago.
     void concluir();
   }
 
   function rolarAtePagamento() {
-    window.setTimeout(() => cartaoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    window.setTimeout(() => pixRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
-  /** Cartão do formulário: confere os dados de novo (podem ter mudado) e envia. Lança para o cartão aceitar outra tentativa. */
-  async function pagarComCartao(cartao: CartaoDoFormulario) {
-    if (!conferir(["email", "cnpj", "telefone"])) throw new Error("Confira os dados da clínica.");
-    if (!exigirTermos()) throw new Error("Marque “Declaro que aceito os termos de uso”.");
-    const ok = await concluir(cartao);
-    if (!ok) throw new Error("Pagamento não concluído.");
-  }
-
-  async function concluir(cartao?: CartaoDoFormulario): Promise<boolean> {
+  async function concluir() {
     setEnviando(true);
     // Indo para o Mercado Pago: o botão segue carregando até a página trocar.
     let saindo = false;
@@ -320,7 +303,6 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       plano: planoEscolhido.codigo,
       ciclo: pago ? cicloEscolhido : "mensal",
       ...(escolheMeio ? { meio } : {}),
-      ...(cartao ? { cartao } : {}),
       ...(pago && cupom ? { cupom: cupom.codigo } : {}),
       clinica: {
         nomeFantasia: valores.nomeFantasia,
@@ -345,7 +327,6 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
             checkoutUrl?: string | null;
             pedidoId?: string | null;
             pix?: PixGerado | null;
-            desafio?: string | null;
             message?: string;
           })
         | null;
@@ -355,43 +336,33 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       if (pago && json?.pix && json.pedidoId) {
         setPix({ pedidoId: json.pedidoId, pix: json.pix });
         rolarAtePagamento();
-        return true;
-      }
-      if (pago && json?.desafio && json.checkoutUrl && !saiDoSistema(json.checkoutUrl)) {
-        setDesafio({ url: json.desafio, retorno: json.checkoutUrl });
-        return true;
+        return;
       }
       if (pago && json?.checkoutUrl) {
-        // Cobrança automática: o cartão é cadastrado na página de assinatura do Mercado Pago, que volta para o retorno.
-        if (assinaturaNoMercadoPago && json.checkoutUrl.startsWith("https://") && saiDoSistema(json.checkoutUrl)) {
+        // Cartão: pago na página do Mercado Pago, que depois volta para o retorno.
+        if (cartaoNoMercadoPago && paginaDoMercadoPago(json.checkoutUrl)) {
           saindo = true;
           window.location.assign(json.checkoutUrl);
-          return true;
+          return;
         }
-        if (saiDoSistema(json.checkoutUrl)) {
-          toast.error("Não foi possível concluir o pagamento nesta página. Tente outro cartão ou pague por Pix.");
-          return false;
-        }
+        // Sem o Mercado Pago configurado (desenvolvimento), a confirmação é aqui no site.
         if (json.checkoutUrl.startsWith("/") && !json.checkoutUrl.startsWith("//")) {
           router.push(json.checkoutUrl);
-          return true;
+          return;
         }
-        const destino = new URL(json.checkoutUrl);
-        router.push(`${destino.pathname}${destino.search}${destino.hash}`);
-        return true;
+        toast.error("Não foi possível abrir a página de pagamento. Tente de novo.");
+        return;
       }
       setResultado({
         mensagem: json?.mensagem || "Enviamos o acesso para o e-mail do administrador.",
         email: json?.email || valores.adminEmail,
         senhaTemporaria: json?.senhaTemporaria,
       });
-      return true;
     } catch (err) {
       const mensagem = mensagemDoErro(err, "Não foi possível concluir a assinatura.");
       const campo = campoDoErro(mensagem);
       if (campo) apontar(campo, mensagem);
       else toast.error(mensagem);
-      return false;
     } finally {
       if (!saindo) setEnviando(false);
     }
@@ -608,7 +579,6 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       {escolheMeio ? (
         <fieldset className="mt-6">
           <legend className="text-xs font-semibold uppercase tracking-wider text-ja-ink">Como pagar</legend>
-          {anual ? <p className="mt-2 text-sm text-ja-muted">Cartão e Pix são pagos nesta página.</p> : null}
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {meios(anual).map((item) => {
               const ativo = item.valor === meio;
@@ -627,7 +597,6 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
                     onChange={() => {
                       setMeio(item.valor);
                       setPix(null);
-                      if (item.valor !== "cartao") setCartaoAberto(false);
                     }}
                     className="mt-1 size-4 accent-ja-teal"
                   />
@@ -641,8 +610,9 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
           </div>
           {assinaturaNoMercadoPago ? (
             <p className="mt-3 text-sm text-ja-muted">
-              O cartão é cadastrado na página do Mercado Pago, na conta de quem está pagando. A primeira mensalidade sai
-              no cadastro do cartão e as seguintes, todo mês.
+              O cartão é cadastrado na página do Mercado Pago. Entre lá com o e-mail do administrador
+              {valores.adminEmail.trim() ? ` (${valores.adminEmail.trim()})` : ""}: a assinatura só é aceita com ele.
+              A primeira mensalidade sai no cadastro do cartão e as seguintes, todo mês.
             </p>
           ) : null}
         </fieldset>
@@ -674,7 +644,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
             Voltar
           </button>
         ) : null}
-        {(pedeCartao && cartaoAberto) || pix ? null : (
+        {pix ? null : (
           <button
             type="submit"
             disabled={enviando}
@@ -686,8 +656,8 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
                 ? "Continuar"
                 : assinaturaNoMercadoPago
                   ? "Continuar no Mercado Pago"
-                  : pedeCartao
-                    ? `Continuar para o cartão · ${reais(precoFinal)}`
+                  : cartaoNoMercadoPago
+                    ? `Continuar no Mercado Pago · ${reais(precoFinal)}`
                     : pago
                       ? `Gerar Pix · ${reais(precoFinal)}`
                       : "Começar 7 dias grátis"}
@@ -696,16 +666,8 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       </div>
       </div>
     </form>
-    {desafio ? (
-      <ConfirmacaoBanco
-        url={desafio.url}
-        onConcluida={() =>
-          router.push(`${desafio.retorno}${desafio.retorno.includes("?") ? "&" : "?"}origem=banco`)
-        }
-      />
-    ) : null}
     {pix ? (
-      <div ref={cartaoRef} className="mt-4 scroll-mt-6 rounded-2xl border border-ja-line bg-ja-card p-6 sm:p-8">
+      <div ref={pixRef} className="mt-4 scroll-mt-6 rounded-2xl border border-ja-line bg-ja-card p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-wider text-ja-teal">Pix</p>
         <div className="mt-4">
           <PixMercadoPago
@@ -714,21 +676,6 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
             valor={precoFinal}
             onConcluido={() => router.push(`/assinatura/retorno?pedido=${pix.pedidoId}`)}
             onVoltar={() => setPix(null)}
-          />
-        </div>
-      </div>
-    ) : pedeCartao && cartaoAberto ? (
-      <div ref={cartaoRef} className="mt-4 scroll-mt-6 rounded-2xl border border-ja-line bg-ja-card p-6 sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-wider text-ja-teal">Cartão de crédito</p>
-        <p className="mt-2 text-sm text-ja-muted">
-          {`${reais(precoFinal)} pelo ano, à vista ou em até 12x no cartão.`}
-        </p>
-        <div className="mt-4">
-          <CartaoMercadoPago
-            valor={precoFinal}
-            email={valores.adminEmail.trim()}
-            parcelasMaximas={12}
-            onCartao={pagarComCartao}
           />
         </div>
       </div>

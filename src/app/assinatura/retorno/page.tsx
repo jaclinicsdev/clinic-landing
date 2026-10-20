@@ -11,8 +11,8 @@ import { linkDoSistema, urlApi } from "@/lib/planos-publicos";
 function RetornoPagamento() {
   const params = useSearchParams();
   const pedido = params.get("pedido") ?? "";
+  // Checkout do Mercado Pago: volta com ?resultado=aprovado|recusado|pendente&pedido=, mais os parâmetros dele.
   const resultado = params.get("resultado");
-  const veioDoBanco = params.get("origem") === "banco";
   const [estado, setEstado] = React.useState<"aguardando" | "pago" | "pendente" | "erro">("aguardando");
   const [mensagem, setMensagem] = React.useState("Confirmando o pagamento…");
   const [email, setEmail] = React.useState("");
@@ -95,11 +95,9 @@ function RetornoPagamento() {
         {estadoTela === "pago" && email && acessoEnviado ? (
           <p className="mt-3 text-sm text-ja-muted">O acesso foi enviado para {email}.</p>
         ) : null}
-        {estadoTela === "pendente" && (resultado === "pendente" || !resultado) ? (
+        {estadoTela === "pendente" ? (
           <p className="mt-3 text-sm text-ja-muted">
-            {veioDoBanco
-              ? "Se você já confirmou com o banco, o acesso chega no e-mail do administrador em alguns minutos. Nada é cobrado antes dessa confirmação. Você pode fechar esta página."
-              : "Assim que o Mercado Pago confirmar, o acesso chega no e-mail do administrador. Você pode fechar esta página."}
+            Assim que o Mercado Pago confirmar, o acesso chega no e-mail do administrador. Você pode fechar esta página.
           </p>
         ) : null}
         <div className="mt-6">
