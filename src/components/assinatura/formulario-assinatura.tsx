@@ -48,7 +48,7 @@ const VAZIO = {
 
 type Meio = "cartao" | "pix";
 
-/** Endereço do Mercado Pago: a pessoa não sai do site para concluir o pagamento. */
+/** Endereço do Mercado Pago. O pagamento avulso não sai do site; só a cobrança automática vai para lá. */
 function saiDoSistema(url: string) {
   if (url.startsWith("/") && !url.startsWith("//")) return false;
   try {
@@ -67,7 +67,7 @@ function meios(anual: boolean): { valor: Meio; rotulo: string; detalhe: string }
       rotulo: "Cartão de crédito",
       detalhe: anual
         ? "À vista ou em até 12x, nesta página."
-        : "Cobrado agora e todo mês, nesta página. Dá para desligar quando quiser.",
+        : "Cadastrado no Mercado Pago e cobrado todo mês. Dá para desligar quando quiser.",
     },
     {
       valor: "pix",
@@ -143,8 +143,10 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
   const precoFinal = pago && cupom ? valorComDesconto(precoEscolhido, cupom.percentual) : precoEscolhido;
   // Mensal no cartão: cobrança automática. Anual no cartão: em até 12x. Pix: QR Code aqui mesmo.
   const escolheMeio = pago;
-  // Cartão digitado aqui no formulário do Mercado Pago, sem sair do site.
-  const pedeCartao = escolheMeio && meio === "cartao";
+  // Mensal no cartão: o cartão é cadastrado na página de assinatura do Mercado Pago, que cobra todo mês.
+  const assinaturaNoMercadoPago = escolheMeio && meio === "cartao" && !anual;
+  // Anual no cartão: digitado aqui no formulário do Mercado Pago, sem sair do site.
+  const pedeCartao = escolheMeio && meio === "cartao" && anual;
 
   function aoDigitarCupom(valor: string) {
     setCupomDigitado(valor);
@@ -196,6 +198,15 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
     setCupom(null);
     toast.error("Este cupom deixa a assinatura abaixo de R$ 1,00 neste plano.");
   }, [cupom, precoEscolhido]);
+
+  // Volta do Mercado Pago pelo botão do navegador: a página pode voltar da memória com o envio em andamento.
+  React.useEffect(() => {
+    function aoMostrar(evento: PageTransitionEvent) {
+      if (evento.persisted) setEnviando(false);
+    }
+    window.addEventListener("pageshow", aoMostrar);
+    return () => window.removeEventListener("pageshow", aoMostrar);
+  }, []);
 
   function escolher(codigo: string, novoCiclo: "mensal" | "anual") {
     const destino = catalogo.find((item) => item.codigo === codigo);
@@ -283,6 +294,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       rolarAtePagamento();
       return;
     }
+    // Mensal no cartão não abre o formulário do cartão: a API devolve a página de assinatura do Mercado Pago.
     void concluir();
   }
 
@@ -300,6 +312,8 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
 
   async function concluir(cartao?: CartaoDoFormulario): Promise<boolean> {
     setEnviando(true);
+    // Indo para o Mercado Pago: o botão segue carregando até a página trocar.
+    let saindo = false;
 
     const base = urlApi(`/assinatura/${pago ? "checkout" : "gratuito"}`);
     const corpo = {
@@ -348,6 +362,12 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
         return true;
       }
       if (pago && json?.checkoutUrl) {
+        // Cobrança automática: o cartão é cadastrado na página de assinatura do Mercado Pago, que volta para o retorno.
+        if (assinaturaNoMercadoPago && json.checkoutUrl.startsWith("https://") && saiDoSistema(json.checkoutUrl)) {
+          saindo = true;
+          window.location.assign(json.checkoutUrl);
+          return true;
+        }
         if (saiDoSistema(json.checkoutUrl)) {
           toast.error("Não foi possível concluir o pagamento nesta página. Tente outro cartão ou pague por Pix.");
           return false;
@@ -373,7 +393,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       else toast.error(mensagem);
       return false;
     } finally {
-      setEnviando(false);
+      if (!saindo) setEnviando(false);
     }
   }
 
@@ -588,7 +608,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       {escolheMeio ? (
         <fieldset className="mt-6">
           <legend className="text-xs font-semibold uppercase tracking-wider text-ja-ink">Como pagar</legend>
-          <p className="mt-2 text-sm text-ja-muted">Cartão e Pix são pagos nesta página.</p>
+          {anual ? <p className="mt-2 text-sm text-ja-muted">Cartão e Pix são pagos nesta página.</p> : null}
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {meios(anual).map((item) => {
               const ativo = item.valor === meio;
@@ -619,6 +639,12 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
               );
             })}
           </div>
+          {assinaturaNoMercadoPago ? (
+            <p className="mt-3 text-sm text-ja-muted">
+              O cartão é cadastrado na página do Mercado Pago, na conta de quem está pagando. A primeira mensalidade sai
+              no cadastro do cartão e as seguintes, todo mês.
+            </p>
+          ) : null}
         </fieldset>
       ) : null}
 
@@ -658,11 +684,13 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
               ? "Enviando…"
               : !pago && etapa === 1
                 ? "Continuar"
-                : pedeCartao
-                  ? `Continuar para o cartão · ${reais(precoFinal)}`
-                  : pago
-                    ? `Gerar Pix · ${reais(precoFinal)}`
-                    : "Começar 7 dias grátis"}
+                : assinaturaNoMercadoPago
+                  ? "Continuar no Mercado Pago"
+                  : pedeCartao
+                    ? `Continuar para o cartão · ${reais(precoFinal)}`
+                    : pago
+                      ? `Gerar Pix · ${reais(precoFinal)}`
+                      : "Começar 7 dias grátis"}
           </button>
         )}
       </div>
@@ -693,15 +721,13 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       <div ref={cartaoRef} className="mt-4 scroll-mt-6 rounded-2xl border border-ja-line bg-ja-card p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-wider text-ja-teal">Cartão de crédito</p>
         <p className="mt-2 text-sm text-ja-muted">
-          {anual
-            ? `${reais(precoFinal)} pelo ano, à vista ou em até 12x no cartão.`
-            : `${reais(precoFinal)} agora e depois todo mês, no cartão. Dá para desligar a cobrança automática quando quiser.`}
+          {`${reais(precoFinal)} pelo ano, à vista ou em até 12x no cartão.`}
         </p>
         <div className="mt-4">
           <CartaoMercadoPago
             valor={precoFinal}
             email={valores.adminEmail.trim()}
-            parcelasMaximas={anual ? 12 : 1}
+            parcelasMaximas={12}
             onCartao={pagarComCartao}
           />
         </div>
