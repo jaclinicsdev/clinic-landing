@@ -52,6 +52,15 @@
     scroll-behavior: smooth;
   }
 
+  #modulos,
+  #planos,
+  #preview,
+  #calculadora,
+  #seguranca,
+  #faq {
+    scroll-margin-top: 5.5rem;
+  }
+
   body {
     background-color: var(--ja-surface);
     color: var(--ja-ink);

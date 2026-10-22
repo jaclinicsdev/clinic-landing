@@ -15,6 +15,18 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Fechar o menu no mesmo toque remove o link antes de o celular seguir o href.
+  // A rolagem vai na mão, depois que o menu sai, descontando a barra fixa.
+  function irParaSecao(href: string) {
+    const destino = document.getElementById(href.slice(1));
+    setMobileMenuOpen(false);
+    if (!destino) return;
+    // Espera o menu fechar. A animação de altura cancela a rolagem se ela começa no mesmo toque.
+    window.setTimeout(() => {
+      destino.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 320);
+  }
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 12);
@@ -100,7 +112,10 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
                 <a
                   key={link.href}
                   href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    irParaSecao(link.href);
+                  }}
                   className="min-h-11 py-3 text-sm font-medium text-white/80 hover:text-white border-b border-white/8 flex items-center justify-between"
                 >
                   <span>{link.label}</span>
@@ -122,6 +137,12 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(event) => {
+                  event.preventDefault();
+                  const url = event.currentTarget.href;
+                  setMobileMenuOpen(false);
+                  window.open(url, "_blank", "noopener,noreferrer");
+                }}
                 className="min-h-11 w-full rounded-xl border border-white/20 text-white/85 font-medium text-sm inline-flex items-center justify-center"
               >
                 WhatsApp {CONTACT_CONFIG.phoneFormatted}
