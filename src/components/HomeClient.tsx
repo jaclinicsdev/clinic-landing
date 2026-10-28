@@ -8,6 +8,7 @@ import { HeroSection } from "@/components/sections/HeroSection";
 import { InteractiveDemoSection } from "@/components/sections/InteractiveDemoSection";
 import { ScrollJourneySection } from "@/components/sections/ScrollJourneySection";
 import { ModulesBentoSection } from "@/components/sections/ModulesBentoSection";
+import { JadeSection } from "@/components/sections/JadeSection";
 import { PlansSection } from "@/components/sections/PlansSection";
 import { RoiCalculatorSection } from "@/components/sections/RoiCalculatorSection";
 import { SecuritySection } from "@/components/sections/SecuritySection";
@@ -16,13 +17,14 @@ import { FaqSection } from "@/components/sections/FaqSection";
 import { CtaBannerSection } from "@/components/sections/CtaBannerSection";
 import { ScheduleDemoModal } from "@/components/modals/ScheduleDemoModal";
 import type { PlanoComercial } from "@/lib/planos";
+import type { AdicionaisPrimeiraCobranca } from "@/lib/planos-publicos";
 import { MessageCircle } from "lucide-react";
 import { CONTACT_CONFIG } from "@/lib/constants";
 
 interface HomeClientProps {
   precos: Record<string, number> | null;
   precosAnuais: Record<string, number> | null;
-  implementacao: number | null;
+  adicionais: Partial<Record<"essencial" | "profissional", AdicionaisPrimeiraCobranca>>;
   testeInicial?: string;
   nomeInicial?: string;
   emailInicial?: string;
@@ -33,7 +35,7 @@ function planoValido(valor?: string): valor is PlanoComercial["codigo"] {
   return valor === "essencial" || valor === "profissional" || valor === "ilimitado";
 }
 
-export function HomeClient({ precos, precosAnuais, implementacao, testeInicial, nomeInicial, emailInicial, telefoneInicial }: HomeClientProps) {
+export function HomeClient({ precos, precosAnuais, adicionais, testeInicial, nomeInicial, emailInicial, telefoneInicial }: HomeClientProps) {
   const [demoModalOpen, setDemoModalOpen] = useState(() => planoValido(testeInicial));
   const [planoTeste, setPlanoTeste] = useState<PlanoComercial["codigo"] | undefined>(
     planoValido(testeInicial) ? testeInicial : undefined,
@@ -57,11 +59,12 @@ export function HomeClient({ precos, precosAnuais, implementacao, testeInicial, 
       <InteractiveDemoSection />
       <ScrollJourneySection />
       <ModulesBentoSection />
-      <PlansSection precos={precos} precosAnuais={precosAnuais} implementacao={implementacao} onTestarGratis={abrirTeste} />
+      <JadeSection />
+      <PlansSection precos={precos} precosAnuais={precosAnuais} adicionais={adicionais} onTestarGratis={abrirTeste} />
       <RoiCalculatorSection onOpenDemo={openDemo} />
       <SecuritySection />
       <TestimonialsSection />
-      <FaqSection implementacao={implementacao} />
+      <FaqSection adicionais={adicionais} />
       <CtaBannerSection />
 
       <Footer />

@@ -108,7 +108,7 @@ export function ScrollJourneySection() {
       time: "18:00",
       tag: "Diretoria & Analytics",
       title: "DRE simplificado e comissões",
-      desc: "No plano Profissional, o fechamento mostra o DRE simplificado e as comissões dos profissionais. O Power BI está em desenvolvimento, incluso no Ilimitado.",
+      desc: "No plano Profissional, o fechamento mostra o DRE simplificado e as comissões dos profissionais.",
       icon: TrendingUp,
       accent: "text-ja-teal bg-ja-surface border-ja-line",
       uiTitle: "DRE simplificado e comissões",

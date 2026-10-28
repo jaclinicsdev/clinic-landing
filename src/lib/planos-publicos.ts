@@ -21,10 +21,23 @@ export function linkDoSistema(caminho = "/login") {
   return `${base}${caminho.startsWith("/") ? caminho : `/${caminho}`}`;
 }
 
+export interface AdicionaisPrimeiraCobranca {
+  implantacao: number;
+  importacao: number;
+}
+
 export interface CatalogoPublico {
   planos: PlanoPublico[];
-  /** Valor único da implementação no Essencial. Null quando a API não informa. */
-  implementacao: number | null;
+  /** Preço de cada serviço no Essencial e no Profissional. Vazio quando a API não informa. */
+  adicionais: Partial<Record<"essencial" | "profissional", AdicionaisPrimeiraCobranca>>;
+}
+
+function lerAdicionais(valor: unknown): AdicionaisPrimeiraCobranca | null {
+  if (!valor || typeof valor !== "object") return null;
+  const item = valor as { implantacao?: unknown; importacao?: unknown };
+  if (typeof item.implantacao !== "number" || typeof item.importacao !== "number") return null;
+  if (item.implantacao <= 0 || item.importacao <= 0) return null;
+  return { implantacao: item.implantacao, importacao: item.importacao };
 }
 
 export async function listarPlanosPublicos(): Promise<CatalogoPublico | null> {
@@ -34,10 +47,17 @@ export async function listarPlanosPublicos(): Promise<CatalogoPublico | null> {
   try {
     const resposta = await fetch(url, { cache: "no-store" });
     if (!resposta.ok) return null;
-    const corpo = (await resposta.json()) as { planos?: PlanoPublico[]; implementacao?: unknown };
+    const corpo = (await resposta.json()) as {
+      planos?: PlanoPublico[];
+      adicionais?: { essencial?: unknown; profissional?: unknown };
+    };
     if (!corpo.planos) return null;
-    const implementacao = typeof corpo.implementacao === "number" && corpo.implementacao > 0 ? corpo.implementacao : null;
-    return { planos: corpo.planos, implementacao };
+    const adicionais: CatalogoPublico["adicionais"] = {};
+    const essencial = lerAdicionais(corpo.adicionais?.essencial);
+    const profissional = lerAdicionais(corpo.adicionais?.profissional);
+    if (essencial) adicionais.essencial = essencial;
+    if (profissional) adicionais.profissional = profissional;
+    return { planos: corpo.planos, adicionais };
   } catch {
     return null;
   }

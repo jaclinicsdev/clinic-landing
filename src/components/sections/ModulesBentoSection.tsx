@@ -8,10 +8,10 @@ import {
   BarChart3,
   Boxes,
   MessageSquare,
-  PieChart,
   BellRing,
   Bot,
   Palette,
+  ArrowRight,
 } from "lucide-react";
 
 export function ModulesBentoSection() {
@@ -212,13 +212,13 @@ export function ModulesBentoSection() {
                 Faturamento, atendimentos, inadimplência, novos e recorrentes, produtividade e comissões. A exportação sai em CSV.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-ja-line flex items-center gap-1.5 text-ja-muted font-bold text-xs">
-              <PieChart className="w-4 h-4" />
-              Power BI: em desenvolvimento
+            <div className="mt-4 pt-3 border-t border-ja-line flex items-center gap-1.5 text-ja-teal font-bold text-xs">
+              <BarChart3 className="w-4 h-4" />
+              Exportação em CSV
             </div>
           </motion.div>
 
-          {/* Card 6 (1 col - Highlight) : Agente de IA */}
+          {/* Card 6 (1 col - Highlight) : Jade IA */}
           <motion.div
             variants={cardVariants}
             className="bg-ja-brand rounded-2xl p-6 text-white shadow-md hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
@@ -227,16 +227,16 @@ export function ModulesBentoSection() {
               <div className="w-11 h-11 rounded-2xl bg-ja-teal text-white flex items-center justify-center mb-4">
                 <Bot className="w-5 h-5" />
               </div>
-              <h4 className="text-lg font-bold text-white">
-                Agente de IA
-              </h4>
+              <h4 className="text-lg font-bold text-white">Jade IA</h4>
               <p className="text-xs text-white/70 mt-2 leading-relaxed">
-                No plano Ilimitado, administrador e gestor conversam com a Jade sobre a rotina da clínica. O chat não substitui o prontuário.
+                Pergunte em português sobre a clínica. A Jade resume o financeiro, a agenda e indica onde fica cada tela.
               </p>
+              <p className="mt-2 text-xs text-white/55">Só administrador e gestor, no plano Ilimitado.</p>
             </div>
-            <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-1.5 text-white/80 font-bold text-xs">
-              <span>Disponível no Ilimitado</span>
-            </div>
+            <a href="#jade" className="mt-4 pt-3 border-t border-white/10 flex items-center gap-1.5 text-white font-bold text-xs hover:text-white/80">
+              Ver a Jade IA
+              <ArrowRight className="w-3.5 h-3.5" />
+            </a>
           </motion.div>
         </motion.div>
 

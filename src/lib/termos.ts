@@ -35,10 +35,10 @@ export const CLAUSULAS_TERMOS = [
     ],
   },
   {
-    titulo: "Da implementação",
+    titulo: "Da implantação e da importação",
     paragrafos: [
-      "A implementação é a preparação inicial do ambiente para a clínica utilizar o sistema. Ela é agendada com o atendimento, não se converte em suporte ilimitado e não se transfere a outro plano ou a terceiros.",
-      "Nos planos Profissional e Ilimitado, a implementação está inclusa. No plano Essencial, ela é opcional: quando marcada na contratação, o valor publicado na página de planos é somado uma única vez à primeira cobrança. As cobranças seguintes permanecem no preço do plano.",
+      "A implantação é a configuração inicial do ambiente e o treinamento da equipe. A importação traz dados que a clínica já possui: no Essencial, o cadastro de pacientes em planilha; no Profissional e no Ilimitado, o cadastro e a agenda. Prontuário, financeiro, fotos e uma segunda base são orçados à parte. Esses serviços não se convertem em suporte ilimitado e não se transferem a outro plano ou a terceiros.",
+      "No Profissional e no Ilimitado, implantação e importação desse escopo estão inclusas. No Essencial, cada serviço é opcional: quando marcado na contratação, o valor publicado na página de planos é somado uma única vez à primeira cobrança. As cobranças seguintes permanecem no preço do plano. Cupom de desconto não incide sobre esses valores. O teste grátis não inclui esses serviços.",
     ],
   },
   {

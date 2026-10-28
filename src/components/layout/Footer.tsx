@@ -50,6 +50,7 @@ export function Footer() {
             <ul className="space-y-2 text-[13px] text-white/60">
               <li><a href="#planos" className="hover:text-white transition-colors">Planos</a></li>
               <li><a href="#modulos" className="hover:text-white transition-colors">Funcionalidades</a></li>
+              <li><a href="#jade" className="hover:text-white transition-colors">Jade IA</a></li>
               <li><a href="#preview" className="hover:text-white transition-colors">Preview Interativo</a></li>
               <li><a href="#calculadora" className="hover:text-white transition-colors">Calculadora de ROI</a></li>
               <li><a href="#seguranca" className="hover:text-white transition-colors">Segurança & LGPD</a></li>

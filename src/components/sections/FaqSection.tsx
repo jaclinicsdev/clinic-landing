@@ -4,9 +4,21 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageSquare } from "lucide-react";
 import { CONTACT_CONFIG } from "@/lib/constants";
-import { reais } from "@/lib/planos-publicos";
+import { reais, type AdicionaisPrimeiraCobranca } from "@/lib/planos-publicos";
 
-export function FaqSection({ implementacao }: { implementacao: number | null }) {
+function textoAdicionais(adicionais: Partial<Record<"essencial" | "profissional", AdicionaisPrimeiraCobranca>>) {
+  if (!adicionais?.essencial) {
+    return "No Essencial, implantação e importação de pacientes são opcionais e entram só na primeira cobrança, pelo valor mostrado no plano. No Profissional e no Ilimitado, implantação e importação de cadastro e agenda já estão inclusas. Nos meses seguintes fica só o preço do plano.";
+  }
+  const essencial = adicionais.essencial;
+  return `No Essencial, implantação custa ${reais(essencial.implantacao)} e a importação de pacientes custa ${reais(essencial.importacao)}. As duas são opcionais e entram só na primeira cobrança. No Profissional e no Ilimitado, implantação e importação de cadastro e agenda já estão inclusas. Nos meses seguintes fica só o preço do plano.`;
+}
+
+export function FaqSection({
+  adicionais,
+}: {
+  adicionais: Partial<Record<"essencial" | "profissional", AdicionaisPrimeiraCobranca>>;
+}) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
@@ -41,15 +53,13 @@ export function FaqSection({ implementacao }: { implementacao: number | null }) 
         "Escolha Essencial, Profissional ou Ilimitado na página. Dá para testar 7 dias, pagar mês a mês (no cartão, com cobrança automática todo mês, ou no Pix) ou pagar o ano no Pix à vista ou no cartão em até 12x. O acesso do administrador chega por e-mail e a entrada é no sistema da clínica.",
       },
     {
-      question: "O que o agente de IA faz?",
+      question: "O que a Jade IA faz?",
       answer:
-        "No plano Ilimitado, administrador e gestor abrem o chat da Jade e perguntam em português sobre a rotina da clínica: agenda, financeiro e onde fica cada tela. A Jade não substitui o prontuário.",
+        "Só administrador e gestor usam a Jade IA, e apenas no plano Ilimitado. Eles perguntam em português e ela resume a clínica: financeiro da semana, agenda do dia e onde fica cada tela.",
     },
     {
-      question: "Como funciona a implementação?",
-      answer: implementacao
-        ? `No Essencial, a implementação é opcional: marcada na assinatura, ${reais(implementacao)} entram só na primeira cobrança. No Profissional e no Ilimitado, a implementação já está inclusa. Nos três, a equipe prepara o ambiente da clínica. Não é suporte ilimitado.`
-        : "No Essencial, a implementação é opcional e entra só na primeira cobrança, pelo valor mostrado no plano. No Profissional e no Ilimitado, a implementação já está inclusa. Nos três, a equipe prepara o ambiente da clínica. Não é suporte ilimitado.",
+      question: "Como funcionam a implantação e a importação?",
+      answer: textoAdicionais(adicionais),
     },
     {
       question: "O sistema tem tema claro e escuro?",

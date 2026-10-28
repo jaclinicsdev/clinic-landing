@@ -37,6 +37,7 @@ export function Navbar({ onOpenDemo }: NavbarProps) {
 
   const navLinks = [
     { label: "Funcionalidades", href: "#modulos" },
+    { label: "Jade IA", href: "#jade" },
     { label: "Planos", href: "#planos" },
     { label: "Preview", href: "#preview" },
     { label: "ROI", href: "#calculadora" },

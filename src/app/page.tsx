@@ -24,7 +24,7 @@ export default async function Home({
     <HomeClient
       precos={precos}
       precosAnuais={precosAnuais}
-      implementacao={catalogo?.implementacao ?? null}
+      adicionais={catalogo?.adicionais ?? {}}
       testeInicial={params.teste}
       nomeInicial={params.nome}
       emailInicial={params.email}

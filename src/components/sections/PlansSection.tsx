@@ -7,16 +7,31 @@ import { ArrowRight, Check, Clock3, Layers } from "lucide-react";
 import { CONTACT_CONFIG } from "@/lib/constants";
 import { PLANOS } from "@/lib/planos";
 import { BRAND } from "@/lib/brand";
-import { reais } from "@/lib/planos-publicos";
+import { reais, type AdicionaisPrimeiraCobranca } from "@/lib/planos-publicos";
 
 interface PlansSectionProps {
   precos: Record<string, number> | null;
   precosAnuais: Record<string, number> | null;
-  implementacao: number | null;
+  adicionais: Partial<Record<"essencial" | "profissional", AdicionaisPrimeiraCobranca>>;
   onTestarGratis: (plano: "essencial" | "profissional" | "ilimitado") => void;
 }
 
-export function PlansSection({ precos, precosAnuais, implementacao, onTestarGratis }: PlansSectionProps) {
+function textoDoItem(
+  item: { texto: string; adicional?: "implantacao" | "importacao" },
+  codigo: string,
+  adicionais: Partial<Record<"essencial" | "profissional", AdicionaisPrimeiraCobranca>>,
+) {
+  if (item.adicional !== "implantacao" && item.adicional !== "importacao") return item.texto;
+  if (codigo !== "essencial" && codigo !== "profissional") return item.texto;
+  if (!adicionais) return item.texto;
+  const preco = adicionais[codigo]?.[item.adicional];
+  if (!preco) return item.texto;
+  if (item.adicional === "implantacao") return `Implantação opcional por ${reais(preco)}, só na primeira cobrança`;
+  if (codigo === "profissional") return `Importação de pacientes e agenda opcional por ${reais(preco)}, só na primeira cobrança`;
+  return `Importação de pacientes opcional por ${reais(preco)}, só na primeira cobrança`;
+}
+
+export function PlansSection({ precos, precosAnuais, adicionais, onTestarGratis }: PlansSectionProps) {
   return (
     <section id="planos" className="py-12 md:py-16 lg:py-20 bg-ja-surface text-ja-ink relative border-t border-ja-line">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -117,9 +132,20 @@ export function PlansSection({ precos, precosAnuais, implementacao, onTestarGrat
                         <Check className={`w-4 h-4 shrink-0 mt-0.5 ${plano.destaque ? "text-white" : "text-ja-teal"}`} />
                       )}
                       <span className={plano.destaque ? "text-white/85" : "text-ja-ink"}>
-                        {item.implementacao && implementacao
-                          ? `Implementação opcional por ${reais(implementacao)} na primeira cobrança`
-                          : item.texto}
+                        {textoDoItem(item, plano.codigo, adicionais)}
+                        {item.demonstracao ? (
+                          <a
+                            href={item.demonstracao}
+                            className={`ml-2 inline-flex align-middle items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold transition-colors ${
+                              plano.destaque
+                                ? "bg-white text-ja-brand hover:bg-white/90"
+                                : "bg-ja-teal text-white hover:bg-ja-teal-hover"
+                            }`}
+                          >
+                            Ver demonstração
+                            <ArrowRight className="size-3" />
+                          </a>
+                        ) : null}
                         {emDesenvolvimento && (
                           <span
                             className={`ml-2 inline-flex align-middle text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${
@@ -193,7 +219,7 @@ export function PlansSection({ precos, precosAnuais, implementacao, onTestarGrat
         </div>
 
         <p className="mt-8 text-center text-xs text-ja-muted max-w-2xl mx-auto">
-          O Power BI entra no plano Ilimitado e segue em desenvolvimento: a área aparece no menu, mas ainda não opera no dia a dia. O agente de IA já responde nesse plano.
+          Implantação e importação no Essencial, quando marcadas na assinatura, entram só na primeira cobrança. Nos meses seguintes fica o preço do plano. No Profissional e no Ilimitado, as duas já estão inclusas. Prontuário, financeiro, fotos e uma segunda base ficam sob consulta. A Jade IA já responde no plano Ilimitado, só para administrador e gestor.
         </p>
       </div>
     </section>

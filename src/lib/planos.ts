@@ -4,7 +4,9 @@ export interface ItemPlano {
   texto: string;
   status: StatusItemPlano;
   /** O preço vem da API e entra no texto só quando a landing consegue carregá-lo. */
-  implementacao?: boolean;
+  adicional?: "implantacao" | "importacao";
+  /** Leva à seção da landing, como a demonstração da Jade. */
+  demonstracao?: string;
 }
 
 export interface PlanoComercial {
@@ -33,9 +35,14 @@ export const PLANOS: PlanoComercial[] = [
       { texto: "RH: ponto e holerites", status: "disponivel" },
       { texto: "Configurações, permissões, procedimentos e tema claro ou escuro", status: "disponivel" },
       {
-        texto: "Implementação opcional na primeira cobrança",
+        texto: "Implantação opcional, só na primeira cobrança",
         status: "disponivel",
-        implementacao: true,
+        adicional: "implantacao",
+      },
+      {
+        texto: "Importação de pacientes opcional, só na primeira cobrança",
+        status: "disponivel",
+        adicional: "importacao",
       },
     ],
   },
@@ -44,13 +51,11 @@ export const PLANOS: PlanoComercial[] = [
     nome: "Profissional",
     destaque: true,
     resumo: "Para a clínica que fecha o caixa, controla estoque e lê os indicadores.",
-    limites: ["Até 20 usuários", "Unidades sem limite", "Implementação inclusa"],
+    limites: ["Até 20 usuários", "Unidades sem limite", "Implantação e importação inclusas"],
     itens: [
       { texto: "Tudo do Essencial", status: "disponivel" },
-      {
-        texto: "Implementação inclusa: nossa equipe prepara o ambiente para a clínica usar o sistema",
-        status: "disponivel",
-      },
+      { texto: "Implantação inclusa", status: "disponivel" },
+      { texto: "Importação de pacientes e agenda inclusa", status: "disponivel" },
       { texto: "Contas a receber e a pagar, fluxo de caixa e DRE simplificado", status: "disponivel" },
       { texto: "Baixa em PIX, dinheiro, cartão ou boleto", status: "disponivel" },
       { texto: "Lotes de convênio, glosa e comissões", status: "disponivel" },
@@ -63,16 +68,13 @@ export const PLANOS: PlanoComercial[] = [
     nome: "Ilimitado",
     destaque: false,
     resumo: "Para confirmar a agenda sozinha e reservar os módulos avançados.",
-    limites: ["Usuários sem limite", "Unidades sem limite", "Implementação inclusa"],
+    limites: ["Usuários sem limite", "Unidades sem limite", "Implantação e importação inclusas"],
     itens: [
       { texto: "Tudo do Profissional", status: "disponivel" },
-      {
-        texto: "Implementação inclusa: nossa equipe prepara o ambiente para a clínica usar o sistema",
-        status: "disponivel",
-      },
+      { texto: "Implantação inclusa", status: "disponivel" },
+      { texto: "Importação de cadastro e agenda inclusa", status: "disponivel" },
       { texto: "Lembretes de consulta por WhatsApp e e-mail", status: "disponivel" },
-      { texto: "Power BI", status: "desenvolvimento" },
-      { texto: "Agente de IA", status: "disponivel" },
+      { texto: "Jade IA para administrador e gestor", status: "disponivel", demonstracao: "#jade" },
     ],
   },
 ];

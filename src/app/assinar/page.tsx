@@ -39,7 +39,7 @@ export default async function AssinarPage({
         preco={preco}
         modo={modo}
         ciclo={ciclo}
-        implementacao={catalogo?.implementacao ?? null}
+        adicionais={catalogo?.adicionais ?? {}}
         planos={planos.filter((item) => item.precoMensal > 0)}
         iniciais={{
           adminNome: params.nome,

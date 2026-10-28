@@ -9,7 +9,7 @@ import { AceiteTermos } from "@/components/assinatura/aceite-termos";
 import { PixMercadoPago, type PixGerado } from "@/components/assinatura/pix-mercado-pago";
 import { formatarCnpj, formatarTelefone } from "@/lib/mascara";
 import { normalizarCodigoCupom, valorComDesconto } from "@/lib/cupom";
-import { linkDoSistema, reais, urlApi, type PlanoPublico } from "@/lib/planos-publicos";
+import { linkDoSistema, reais, urlApi, type AdicionaisPrimeiraCobranca, type PlanoPublico } from "@/lib/planos-publicos";
 import { avisoDeEmail, campoDoErro, cnpjValido, MENSAGEM_CNPJ, MENSAGEM_TELEFONE, telefoneValido } from "@/lib/validacao";
 
 interface FormularioAssinaturaProps {
@@ -18,7 +18,7 @@ interface FormularioAssinaturaProps {
   preco: number;
   modo: "gratuito" | "pago";
   ciclo: "mensal" | "anual";
-  implementacao?: number | null;
+  adicionais?: Partial<Record<"essencial" | "profissional", AdicionaisPrimeiraCobranca>>;
   planos?: PlanoPublico[];
   iniciais?: {
     adminNome?: string;
@@ -98,7 +98,7 @@ function mensagemDoErro(err: unknown, padrao: string) {
   return err instanceof Error && err.message ? err.message : padrao;
 }
 
-export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, implementacao = null, planos = [], iniciais }: FormularioAssinaturaProps) {
+export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, adicionais = {}, planos = [], iniciais }: FormularioAssinaturaProps) {
   const router = useRouter();
   const [valores, setValores] = React.useState({
     ...VAZIO,
@@ -119,7 +119,8 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, imp
   const [cupomDigitado, setCupomDigitado] = React.useState("");
   const [cupom, setCupom] = React.useState<{ codigo: string; percentual: number } | null>(null);
   const [querCupom, setQuerCupom] = React.useState(false);
-  const [querImplementacao, setQuerImplementacao] = React.useState(false);
+  const [querImplantacao, setQuerImplantacao] = React.useState(false);
+  const [querImportacao, setQuerImportacao] = React.useState(false);
   const [validandoCupom, setValidandoCupom] = React.useState(false);
   const pixRef = React.useRef<HTMLDivElement>(null);
   const login = linkDoSistema("/login");
@@ -141,9 +142,12 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, imp
       ? planoEscolhido.precoMensal
       : preco;
   const precoFinal = pago && cupom ? valorComDesconto(precoEscolhido, cupom.percentual) : precoEscolhido;
-  const comImplementacao =
-    pago && planoEscolhido.codigo === "essencial" && querImplementacao && implementacao != null && implementacao > 0;
-  const total = precoFinal + (comImplementacao && implementacao ? implementacao : 0);
+  const tabelaAdicional = planoEscolhido.codigo === "essencial" ? adicionais.essencial : undefined;
+  const precoImplantacao = tabelaAdicional?.implantacao ?? 0;
+  const precoImportacao = tabelaAdicional?.importacao ?? 0;
+  const comImplantacao = pago && querImplantacao && precoImplantacao > 0;
+  const comImportacao = pago && querImportacao && precoImportacao > 0;
+  const total = precoFinal + (comImplantacao ? precoImplantacao : 0) + (comImportacao ? precoImportacao : 0);
   // Mensal no cartão: cobrança automática. Anual no cartão: em até 12x. Pix: QR Code aqui mesmo.
   const escolheMeio = pago;
   // Cartão: pago na página do Mercado Pago. No anual, é o checkout dele, à vista ou em até 12x.
@@ -309,7 +313,8 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, imp
       ciclo: pago ? cicloEscolhido : "mensal",
       ...(escolheMeio ? { meio } : {}),
       ...(pago && cupom ? { cupom: cupom.codigo } : {}),
-      ...(comImplementacao ? { implementacao: true } : {}),
+      ...(comImplantacao ? { implantacao: true } : {}),
+      ...(comImportacao ? { importacao: true } : {}),
       clinica: {
         nomeFantasia: valores.nomeFantasia,
         razaoSocial: valores.razaoSocial,
@@ -458,11 +463,13 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, imp
             </p>
           ) : null}
           <p className="font-display text-4xl font-bold tracking-tight text-ja-ink">
-            {pago ? reais(comImplementacao ? total : precoFinal) : "Grátis"}
+            {pago ? reais(total) : "Grátis"}
           </p>
           <p className="mt-1 text-sm text-ja-muted">
-            {comImplementacao
-              ? `nesta cobrança · depois ${reais(precoFinal)}${anual ? " por ano" : " /mês"}`
+            {comImplantacao || comImportacao
+              ? anual
+                ? `só neste pagamento · o próximo ano fica ${reais(precoFinal)}`
+                : `só neste mês · depois ${reais(precoFinal)} /mês`
               : pago
                 ? anual
                   ? "pelo ano"
@@ -511,18 +518,40 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, imp
             ) : null}
           </div>
         ) : null}
-        {pago && planoEscolhido.codigo === "essencial" && implementacao != null && implementacao > 0 ? (
-          <div className="mt-4">
-            <label className="flex cursor-pointer items-start gap-2 text-sm font-medium text-ja-ink">
-              <input
-                type="checkbox"
-                checked={querImplementacao}
-                onChange={(evento) => setQuerImplementacao(evento.target.checked)}
-                className="mt-0.5 size-4 accent-ja-teal"
-              />
-              Quero implementação ({reais(implementacao)})
-            </label>
-            <p className="mt-1 pl-6 text-xs text-ja-muted">Entra só nesta cobrança. As seguintes ficam no preço do plano.</p>
+        {pago && (precoImplantacao > 0 || precoImportacao > 0) ? (
+          <div className="mt-4 grid gap-3">
+            {precoImplantacao > 0 ? (
+              <div>
+                <label className="flex cursor-pointer items-start gap-2 text-sm font-medium text-ja-ink">
+                  <input
+                    type="checkbox"
+                    checked={querImplantacao}
+                    onChange={(evento) => setQuerImplantacao(evento.target.checked)}
+                    className="mt-0.5 size-4 accent-ja-teal"
+                  />
+                  Quero implantação ({reais(precoImplantacao)})
+                </label>
+                <p className="mt-1 pl-6 text-xs text-ja-muted">
+                  Cobrada uma vez, neste pagamento. Nas cobranças seguintes não entra.
+                </p>
+              </div>
+            ) : null}
+            {precoImportacao > 0 ? (
+              <div>
+                <label className="flex cursor-pointer items-start gap-2 text-sm font-medium text-ja-ink">
+                  <input
+                    type="checkbox"
+                    checked={querImportacao}
+                    onChange={(evento) => setQuerImportacao(evento.target.checked)}
+                    className="mt-0.5 size-4 accent-ja-teal"
+                  />
+                  Quero importação de pacientes ({reais(precoImportacao)})
+                </label>
+                <p className="mt-1 pl-6 text-xs text-ja-muted">
+                  Cobrada uma vez, neste pagamento. Nas cobranças seguintes não entra.
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : null}
         <Link href="/#planos" className="mt-5 inline-block text-sm font-medium text-ja-muted hover:text-ja-ink">
@@ -683,9 +712,9 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, imp
                 : assinaturaNoMercadoPago
                   ? "Continuar no Mercado Pago"
                   : cartaoNoMercadoPago
-                    ? `Continuar no Mercado Pago · ${reais(precoFinal)}`
+                    ? `Continuar no Mercado Pago · ${reais(total)}`
                     : pago
-                      ? `Gerar Pix · ${reais(precoFinal)}`
+                      ? `Gerar Pix · ${reais(total)}`
                       : "Começar 7 dias grátis"}
           </button>
         )}
@@ -699,7 +728,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, imp
           <PixMercadoPago
             pedidoId={pix.pedidoId}
             pix={pix.pix}
-            valor={precoFinal}
+            valor={total}
             onConcluido={() => router.push(`/assinatura/retorno?pedido=${pix.pedidoId}`)}
             onVoltar={() => setPix(null)}
           />
