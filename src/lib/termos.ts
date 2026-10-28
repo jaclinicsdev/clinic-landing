@@ -35,10 +35,10 @@ export const CLAUSULAS_TERMOS = [
     ],
   },
   {
-    titulo: "Da implementação no plano Ilimitado",
+    titulo: "Da implementação",
     paragrafos: [
-      "A contratação do plano Ilimitado inclui 20 (vinte) horas de implementação, nas quais a equipe da J.A. Clinics prepara o ambiente para a clínica utilizar o sistema.",
-      "Essas horas destinam-se à implantação inicial, são agendadas com o atendimento e não se convertem em suporte ilimitado, nem se transferem a outro plano ou a terceiros.",
+      "A implementação é a preparação inicial do ambiente para a clínica utilizar o sistema. Ela é agendada com o atendimento, não se converte em suporte ilimitado e não se transfere a outro plano ou a terceiros.",
+      "Nos planos Profissional e Ilimitado, a implementação está inclusa. No plano Essencial, ela é opcional: quando marcada na contratação, o valor publicado na página de planos é somado uma única vez à primeira cobrança. As cobranças seguintes permanecem no preço do plano.",
     ],
   },
   {

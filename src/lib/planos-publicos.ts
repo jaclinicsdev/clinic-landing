@@ -21,15 +21,23 @@ export function linkDoSistema(caminho = "/login") {
   return `${base}${caminho.startsWith("/") ? caminho : `/${caminho}`}`;
 }
 
-export async function listarPlanosPublicos(): Promise<PlanoPublico[] | null> {
+export interface CatalogoPublico {
+  planos: PlanoPublico[];
+  /** Valor único da implementação no Essencial. Null quando a API não informa. */
+  implementacao: number | null;
+}
+
+export async function listarPlanosPublicos(): Promise<CatalogoPublico | null> {
   const url = urlApi("/planos");
   if (!url) return null;
 
   try {
     const resposta = await fetch(url, { cache: "no-store" });
     if (!resposta.ok) return null;
-    const corpo = (await resposta.json()) as { planos?: PlanoPublico[] };
-    return corpo.planos ?? null;
+    const corpo = (await resposta.json()) as { planos?: PlanoPublico[]; implementacao?: unknown };
+    if (!corpo.planos) return null;
+    const implementacao = typeof corpo.implementacao === "number" && corpo.implementacao > 0 ? corpo.implementacao : null;
+    return { planos: corpo.planos, implementacao };
   } catch {
     return null;
   }

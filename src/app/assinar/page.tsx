@@ -14,7 +14,8 @@ export default async function AssinarPage({
   const params = await searchParams;
   const modo = params.modo === "pago" ? "pago" : params.modo === "gratuito" ? "gratuito" : null;
   const ciclo = params.ciclo === "anual" ? "anual" : "mensal";
-  const planos = await listarPlanosPublicos();
+  const catalogo = await listarPlanosPublicos();
+  const planos = catalogo?.planos ?? null;
   const plano = planos?.find((item) => item.codigo === params.plano);
   const precoAnual = Number(plano?.precoAnual);
   if (!planos || !modo || !plano || plano.precoMensal <= 0) notFound();
@@ -38,6 +39,7 @@ export default async function AssinarPage({
         preco={preco}
         modo={modo}
         ciclo={ciclo}
+        implementacao={catalogo?.implementacao ?? null}
         planos={planos.filter((item) => item.precoMensal > 0)}
         iniciais={{
           adminNome: params.nome,

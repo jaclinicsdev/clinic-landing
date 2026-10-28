@@ -18,6 +18,7 @@ interface FormularioAssinaturaProps {
   preco: number;
   modo: "gratuito" | "pago";
   ciclo: "mensal" | "anual";
+  implementacao?: number | null;
   planos?: PlanoPublico[];
   iniciais?: {
     adminNome?: string;
@@ -97,7 +98,7 @@ function mensagemDoErro(err: unknown, padrao: string) {
   return err instanceof Error && err.message ? err.message : padrao;
 }
 
-export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, planos = [], iniciais }: FormularioAssinaturaProps) {
+export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, implementacao = null, planos = [], iniciais }: FormularioAssinaturaProps) {
   const router = useRouter();
   const [valores, setValores] = React.useState({
     ...VAZIO,
@@ -118,6 +119,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
   const [cupomDigitado, setCupomDigitado] = React.useState("");
   const [cupom, setCupom] = React.useState<{ codigo: string; percentual: number } | null>(null);
   const [querCupom, setQuerCupom] = React.useState(false);
+  const [querImplementacao, setQuerImplementacao] = React.useState(false);
   const [validandoCupom, setValidandoCupom] = React.useState(false);
   const pixRef = React.useRef<HTMLDivElement>(null);
   const login = linkDoSistema("/login");
@@ -139,6 +141,9 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       ? planoEscolhido.precoMensal
       : preco;
   const precoFinal = pago && cupom ? valorComDesconto(precoEscolhido, cupom.percentual) : precoEscolhido;
+  const comImplementacao =
+    pago && planoEscolhido.codigo === "essencial" && querImplementacao && implementacao != null && implementacao > 0;
+  const total = precoFinal + (comImplementacao && implementacao ? implementacao : 0);
   // Mensal no cartão: cobrança automática. Anual no cartão: em até 12x. Pix: QR Code aqui mesmo.
   const escolheMeio = pago;
   // Cartão: pago na página do Mercado Pago. No anual, é o checkout dele, à vista ou em até 12x.
@@ -304,6 +309,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
       ciclo: pago ? cicloEscolhido : "mensal",
       ...(escolheMeio ? { meio } : {}),
       ...(pago && cupom ? { cupom: cupom.codigo } : {}),
+      ...(comImplementacao ? { implementacao: true } : {}),
       clinica: {
         nomeFantasia: valores.nomeFantasia,
         razaoSocial: valores.razaoSocial,
@@ -452,10 +458,16 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
             </p>
           ) : null}
           <p className="font-display text-4xl font-bold tracking-tight text-ja-ink">
-            {pago ? reais(precoFinal) : "Grátis"}
+            {pago ? reais(comImplementacao ? total : precoFinal) : "Grátis"}
           </p>
           <p className="mt-1 text-sm text-ja-muted">
-            {pago ? (anual ? "pelo ano" : "por mês") : "7 dias no plano escolhido"}
+            {comImplementacao
+              ? `nesta cobrança · depois ${reais(precoFinal)}${anual ? " por ano" : " /mês"}`
+              : pago
+                ? anual
+                  ? "pelo ano"
+                  : "por mês"
+                : "7 dias no plano escolhido"}
             {cupom ? ` · ${cupom.codigo} (${cupom.percentual}%)` : ""}
           </p>
         </div>
@@ -497,6 +509,20 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, pla
                 ) : null}
               </div>
             ) : null}
+          </div>
+        ) : null}
+        {pago && planoEscolhido.codigo === "essencial" && implementacao != null && implementacao > 0 ? (
+          <div className="mt-4">
+            <label className="flex cursor-pointer items-start gap-2 text-sm font-medium text-ja-ink">
+              <input
+                type="checkbox"
+                checked={querImplementacao}
+                onChange={(evento) => setQuerImplementacao(evento.target.checked)}
+                className="mt-0.5 size-4 accent-ja-teal"
+              />
+              Quero implementação ({reais(implementacao)})
+            </label>
+            <p className="mt-1 pl-6 text-xs text-ja-muted">Entra só nesta cobrança. As seguintes ficam no preço do plano.</p>
           </div>
         ) : null}
         <Link href="/#planos" className="mt-5 inline-block text-sm font-medium text-ja-muted hover:text-ja-ink">

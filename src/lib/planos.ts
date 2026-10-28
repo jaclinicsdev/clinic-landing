@@ -3,6 +3,8 @@ export type StatusItemPlano = "disponivel" | "desenvolvimento";
 export interface ItemPlano {
   texto: string;
   status: StatusItemPlano;
+  /** O preço vem da API e entra no texto só quando a landing consegue carregá-lo. */
+  implementacao?: boolean;
 }
 
 export interface PlanoComercial {
@@ -30,6 +32,11 @@ export const PLANOS: PlanoComercial[] = [
       { texto: "Convênios, tabela de preços e autorização prévia", status: "disponivel" },
       { texto: "RH: ponto e holerites", status: "disponivel" },
       { texto: "Configurações, permissões, procedimentos e tema claro ou escuro", status: "disponivel" },
+      {
+        texto: "Implementação opcional na primeira cobrança",
+        status: "disponivel",
+        implementacao: true,
+      },
     ],
   },
   {
@@ -37,9 +44,13 @@ export const PLANOS: PlanoComercial[] = [
     nome: "Profissional",
     destaque: true,
     resumo: "Para a clínica que fecha o caixa, controla estoque e lê os indicadores.",
-    limites: ["Até 20 usuários", "Unidades sem limite"],
+    limites: ["Até 20 usuários", "Unidades sem limite", "Implementação inclusa"],
     itens: [
       { texto: "Tudo do Essencial", status: "disponivel" },
+      {
+        texto: "Implementação inclusa: nossa equipe prepara o ambiente para a clínica usar o sistema",
+        status: "disponivel",
+      },
       { texto: "Contas a receber e a pagar, fluxo de caixa e DRE simplificado", status: "disponivel" },
       { texto: "Baixa em PIX, dinheiro, cartão ou boleto", status: "disponivel" },
       { texto: "Lotes de convênio, glosa e comissões", status: "disponivel" },
@@ -52,16 +63,16 @@ export const PLANOS: PlanoComercial[] = [
     nome: "Ilimitado",
     destaque: false,
     resumo: "Para confirmar a agenda sozinha e reservar os módulos avançados.",
-    limites: ["Usuários sem limite", "Unidades sem limite", "20h de implementação"],
+    limites: ["Usuários sem limite", "Unidades sem limite", "Implementação inclusa"],
     itens: [
       { texto: "Tudo do Profissional", status: "disponivel" },
       {
-        texto: "20 horas de implementação: nossa equipe prepara o ambiente para a clínica usar o sistema",
+        texto: "Implementação inclusa: nossa equipe prepara o ambiente para a clínica usar o sistema",
         status: "disponivel",
       },
       { texto: "Lembretes de consulta por WhatsApp e e-mail", status: "disponivel" },
       { texto: "Power BI", status: "desenvolvimento" },
-      { texto: "Agente de IA", status: "desenvolvimento" },
+      { texto: "Agente de IA", status: "disponivel" },
     ],
   },
 ];

@@ -12,10 +12,11 @@ import { reais } from "@/lib/planos-publicos";
 interface PlansSectionProps {
   precos: Record<string, number> | null;
   precosAnuais: Record<string, number> | null;
+  implementacao: number | null;
   onTestarGratis: (plano: "essencial" | "profissional" | "ilimitado") => void;
 }
 
-export function PlansSection({ precos, precosAnuais, onTestarGratis }: PlansSectionProps) {
+export function PlansSection({ precos, precosAnuais, implementacao, onTestarGratis }: PlansSectionProps) {
   return (
     <section id="planos" className="py-12 md:py-16 lg:py-20 bg-ja-surface text-ja-ink relative border-t border-ja-line">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -116,7 +117,9 @@ export function PlansSection({ precos, precosAnuais, onTestarGratis }: PlansSect
                         <Check className={`w-4 h-4 shrink-0 mt-0.5 ${plano.destaque ? "text-white" : "text-ja-teal"}`} />
                       )}
                       <span className={plano.destaque ? "text-white/85" : "text-ja-ink"}>
-                        {item.texto}
+                        {item.implementacao && implementacao
+                          ? `Implementação opcional por ${reais(implementacao)} na primeira cobrança`
+                          : item.texto}
                         {emDesenvolvimento && (
                           <span
                             className={`ml-2 inline-flex align-middle text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${
@@ -190,7 +193,7 @@ export function PlansSection({ precos, precosAnuais, onTestarGratis }: PlansSect
         </div>
 
         <p className="mt-8 text-center text-xs text-ja-muted max-w-2xl mx-auto">
-          Power BI e o agente de IA entram no plano Ilimitado e seguem em desenvolvimento: a área aparece no menu, mas ainda não opera no dia a dia.
+          O Power BI entra no plano Ilimitado e segue em desenvolvimento: a área aparece no menu, mas ainda não opera no dia a dia. O agente de IA já responde nesse plano.
         </p>
       </div>
     </section>

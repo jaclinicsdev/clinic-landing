@@ -22,6 +22,7 @@ import { CONTACT_CONFIG } from "@/lib/constants";
 interface HomeClientProps {
   precos: Record<string, number> | null;
   precosAnuais: Record<string, number> | null;
+  implementacao: number | null;
   testeInicial?: string;
   nomeInicial?: string;
   emailInicial?: string;
@@ -32,7 +33,7 @@ function planoValido(valor?: string): valor is PlanoComercial["codigo"] {
   return valor === "essencial" || valor === "profissional" || valor === "ilimitado";
 }
 
-export function HomeClient({ precos, precosAnuais, testeInicial, nomeInicial, emailInicial, telefoneInicial }: HomeClientProps) {
+export function HomeClient({ precos, precosAnuais, implementacao, testeInicial, nomeInicial, emailInicial, telefoneInicial }: HomeClientProps) {
   const [demoModalOpen, setDemoModalOpen] = useState(() => planoValido(testeInicial));
   const [planoTeste, setPlanoTeste] = useState<PlanoComercial["codigo"] | undefined>(
     planoValido(testeInicial) ? testeInicial : undefined,
@@ -56,11 +57,11 @@ export function HomeClient({ precos, precosAnuais, testeInicial, nomeInicial, em
       <InteractiveDemoSection />
       <ScrollJourneySection />
       <ModulesBentoSection />
-      <PlansSection precos={precos} precosAnuais={precosAnuais} onTestarGratis={abrirTeste} />
+      <PlansSection precos={precos} precosAnuais={precosAnuais} implementacao={implementacao} onTestarGratis={abrirTeste} />
       <RoiCalculatorSection onOpenDemo={openDemo} />
       <SecuritySection />
       <TestimonialsSection />
-      <FaqSection />
+      <FaqSection implementacao={implementacao} />
       <CtaBannerSection />
 
       <Footer />

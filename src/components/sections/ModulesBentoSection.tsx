@@ -8,7 +8,6 @@ import {
   BarChart3,
   Boxes,
   MessageSquare,
-  Sparkles,
   PieChart,
   BellRing,
   Bot,
@@ -228,18 +227,15 @@ export function ModulesBentoSection() {
               <div className="w-11 h-11 rounded-2xl bg-ja-teal text-white flex items-center justify-center mb-4">
                 <Bot className="w-5 h-5" />
               </div>
-              <div className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/15 text-white mb-2">
-                <Sparkles className="w-3 h-3" /> Em desenvolvimento
-              </div>
               <h4 className="text-lg font-bold text-white">
                 Agente de IA
               </h4>
               <p className="text-xs text-white/70 mt-2 leading-relaxed">
-                Reservado no plano Ilimitado. A tela já está no menu e ainda não responde. A implementação entra nas próximas entregas.
+                No plano Ilimitado, administrador e gestor conversam com a Jade sobre a rotina da clínica. O chat não substitui o prontuário.
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-1.5 text-white/80 font-bold text-xs">
-              <span>Em desenvolvimento</span>
+              <span>Disponível no Ilimitado</span>
             </div>
           </motion.div>
         </motion.div>

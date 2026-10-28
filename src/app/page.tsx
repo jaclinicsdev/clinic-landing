@@ -11,7 +11,8 @@ export default async function Home({
   searchParams: Promise<{ teste?: string; nome?: string; email?: string; telefone?: string }>;
 }) {
   const params = await searchParams;
-  const planos = await listarPlanosPublicos();
+  const catalogo = await listarPlanosPublicos();
+  const planos = catalogo?.planos ?? null;
   const precos = planos
     ? Object.fromEntries(planos.map((plano) => [plano.codigo, plano.precoMensal]))
     : null;
@@ -23,6 +24,7 @@ export default async function Home({
     <HomeClient
       precos={precos}
       precosAnuais={precosAnuais}
+      implementacao={catalogo?.implementacao ?? null}
       testeInicial={params.teste}
       nomeInicial={params.nome}
       emailInicial={params.email}

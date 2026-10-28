@@ -4,8 +4,9 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, MessageSquare } from "lucide-react";
 import { CONTACT_CONFIG } from "@/lib/constants";
+import { reais } from "@/lib/planos-publicos";
 
-export function FaqSection() {
+export function FaqSection({ implementacao }: { implementacao: number | null }) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
@@ -42,7 +43,13 @@ export function FaqSection() {
     {
       question: "O que o agente de IA faz?",
       answer:
-        "Está em desenvolvimento. No plano Ilimitado a área já aparece no menu, com o aviso de que a implementação entra nas próximas entregas. Ele ainda não responde no painel.",
+        "No plano Ilimitado, administrador e gestor abrem o chat da Jade e perguntam em português sobre a rotina da clínica: agenda, financeiro e onde fica cada tela. A Jade não substitui o prontuário.",
+    },
+    {
+      question: "Como funciona a implementação?",
+      answer: implementacao
+        ? `No Essencial, a implementação é opcional: marcada na assinatura, ${reais(implementacao)} entram só na primeira cobrança. No Profissional e no Ilimitado, a implementação já está inclusa. Nos três, a equipe prepara o ambiente da clínica. Não é suporte ilimitado.`
+        : "No Essencial, a implementação é opcional e entra só na primeira cobrança, pelo valor mostrado no plano. No Profissional e no Ilimitado, a implementação já está inclusa. Nos três, a equipe prepara o ambiente da clínica. Não é suporte ilimitado.",
     },
     {
       question: "O sistema tem tema claro e escuro?",
