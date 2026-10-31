@@ -119,8 +119,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, adi
   const [cupomDigitado, setCupomDigitado] = React.useState("");
   const [cupom, setCupom] = React.useState<{ codigo: string; percentual: number } | null>(null);
   const [querCupom, setQuerCupom] = React.useState(false);
-  const [querImplantacao, setQuerImplantacao] = React.useState(false);
-  const [querImportacao, setQuerImportacao] = React.useState(false);
+  const [querPacote, setQuerPacote] = React.useState(false);
   const [validandoCupom, setValidandoCupom] = React.useState(false);
   const pixRef = React.useRef<HTMLDivElement>(null);
   const login = linkDoSistema("/login");
@@ -142,12 +141,9 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, adi
       ? planoEscolhido.precoMensal
       : preco;
   const precoFinal = pago && cupom ? valorComDesconto(precoEscolhido, cupom.percentual) : precoEscolhido;
-  const tabelaAdicional = planoEscolhido.codigo === "essencial" ? adicionais.essencial : undefined;
-  const precoImplantacao = tabelaAdicional?.implantacao ?? 0;
-  const precoImportacao = tabelaAdicional?.importacao ?? 0;
-  const comImplantacao = pago && querImplantacao && precoImplantacao > 0;
-  const comImportacao = pago && querImportacao && precoImportacao > 0;
-  const total = precoFinal + (comImplantacao ? precoImplantacao : 0) + (comImportacao ? precoImportacao : 0);
+  const precoPacote = planoEscolhido.codigo === "essencial" ? (adicionais.essencial?.pacote ?? 0) : 0;
+  const comPacote = pago && querPacote && precoPacote > 0;
+  const total = precoFinal + (comPacote ? precoPacote : 0);
   // Mensal no cartão: cobrança automática. Anual no cartão: em até 12x. Pix: QR Code aqui mesmo.
   const escolheMeio = pago;
   // Cartão: pago na página do Mercado Pago. No anual, é o checkout dele, à vista ou em até 12x.
@@ -313,8 +309,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, adi
       ciclo: pago ? cicloEscolhido : "mensal",
       ...(escolheMeio ? { meio } : {}),
       ...(pago && cupom ? { cupom: cupom.codigo } : {}),
-      ...(comImplantacao ? { implantacao: true } : {}),
-      ...(comImportacao ? { importacao: true } : {}),
+      ...(comPacote ? { pacote: true } : {}),
       clinica: {
         nomeFantasia: valores.nomeFantasia,
         razaoSocial: valores.razaoSocial,
@@ -466,7 +461,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, adi
             {pago ? reais(total) : "Grátis"}
           </p>
           <p className="mt-1 text-sm text-ja-muted">
-            {comImplantacao || comImportacao
+            {comPacote
               ? anual
                 ? `só neste pagamento · o próximo ano fica ${reais(precoFinal)}`
                 : `só neste mês · depois ${reais(precoFinal)} /mês`
@@ -518,40 +513,20 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, adi
             ) : null}
           </div>
         ) : null}
-        {pago && (precoImplantacao > 0 || precoImportacao > 0) ? (
-          <div className="mt-4 grid gap-3">
-            {precoImplantacao > 0 ? (
-              <div>
-                <label className="flex cursor-pointer items-start gap-2 text-sm font-medium text-ja-ink">
-                  <input
-                    type="checkbox"
-                    checked={querImplantacao}
-                    onChange={(evento) => setQuerImplantacao(evento.target.checked)}
-                    className="mt-0.5 size-4 accent-ja-teal"
-                  />
-                  Quero implantação ({reais(precoImplantacao)})
-                </label>
-                <p className="mt-1 pl-6 text-xs text-ja-muted">
-                  Cobrada uma vez, neste pagamento. Nas cobranças seguintes não entra.
-                </p>
-              </div>
-            ) : null}
-            {precoImportacao > 0 ? (
-              <div>
-                <label className="flex cursor-pointer items-start gap-2 text-sm font-medium text-ja-ink">
-                  <input
-                    type="checkbox"
-                    checked={querImportacao}
-                    onChange={(evento) => setQuerImportacao(evento.target.checked)}
-                    className="mt-0.5 size-4 accent-ja-teal"
-                  />
-                  Quero importação de pacientes ({reais(precoImportacao)})
-                </label>
-                <p className="mt-1 pl-6 text-xs text-ja-muted">
-                  Cobrada uma vez, neste pagamento. Nas cobranças seguintes não entra.
-                </p>
-              </div>
-            ) : null}
+        {pago && precoPacote > 0 ? (
+          <div className="mt-4">
+            <label className="flex cursor-pointer items-start gap-2 text-sm font-medium text-ja-ink">
+              <input
+                type="checkbox"
+                checked={querPacote}
+                onChange={(evento) => setQuerPacote(evento.target.checked)}
+                className="mt-0.5 size-4 accent-ja-teal"
+              />
+              Quero implantação e importação de pacientes ({reais(precoPacote)})
+            </label>
+            <p className="mt-1 pl-6 text-xs text-ja-muted">
+              Cobrado uma vez, neste pagamento. Nas cobranças seguintes não entra.
+            </p>
           </div>
         ) : null}
         <Link href="/#planos" className="mt-5 inline-block text-sm font-medium text-ja-muted hover:text-ja-ink">

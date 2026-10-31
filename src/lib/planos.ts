@@ -4,7 +4,7 @@ export interface ItemPlano {
   texto: string;
   status: StatusItemPlano;
   /** O preço vem da API e entra no texto só quando a landing consegue carregá-lo. */
-  adicional?: "implantacao" | "importacao";
+  adicional?: "pacote";
   /** Leva à seção da landing, como a demonstração da Jade. */
   demonstracao?: string;
 }
@@ -35,14 +35,9 @@ export const PLANOS: PlanoComercial[] = [
       { texto: "RH: ponto e holerites", status: "disponivel" },
       { texto: "Configurações, permissões, procedimentos e tema claro ou escuro", status: "disponivel" },
       {
-        texto: "Implantação opcional, só na primeira cobrança",
+        texto: "Implantação e importação de pacientes opcionais, só na primeira cobrança",
         status: "disponivel",
-        adicional: "implantacao",
-      },
-      {
-        texto: "Importação de pacientes opcional, só na primeira cobrança",
-        status: "disponivel",
-        adicional: "importacao",
+        adicional: "pacote",
       },
     ],
   },

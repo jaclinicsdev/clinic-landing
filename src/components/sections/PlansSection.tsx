@@ -17,18 +17,14 @@ interface PlansSectionProps {
 }
 
 function textoDoItem(
-  item: { texto: string; adicional?: "implantacao" | "importacao" },
+  item: { texto: string; adicional?: "pacote" },
   codigo: string,
   adicionais: Partial<Record<"essencial" | "profissional", AdicionaisPrimeiraCobranca>>,
 ) {
-  if (item.adicional !== "implantacao" && item.adicional !== "importacao") return item.texto;
-  if (codigo !== "essencial" && codigo !== "profissional") return item.texto;
-  if (!adicionais) return item.texto;
-  const preco = adicionais[codigo]?.[item.adicional];
+  if (item.adicional !== "pacote" || codigo !== "essencial" || !adicionais) return item.texto;
+  const preco = adicionais.essencial?.pacote;
   if (!preco) return item.texto;
-  if (item.adicional === "implantacao") return `Implantação opcional por ${reais(preco)}, só na primeira cobrança`;
-  if (codigo === "profissional") return `Importação de pacientes e agenda opcional por ${reais(preco)}, só na primeira cobrança`;
-  return `Importação de pacientes opcional por ${reais(preco)}, só na primeira cobrança`;
+  return `Implantação e importação de pacientes por ${reais(preco)}, só na primeira cobrança`;
 }
 
 export function PlansSection({ precos, precosAnuais, adicionais, onTestarGratis }: PlansSectionProps) {
@@ -219,7 +215,7 @@ export function PlansSection({ precos, precosAnuais, adicionais, onTestarGratis 
         </div>
 
         <p className="mt-8 text-center text-xs text-ja-muted max-w-2xl mx-auto">
-          Implantação e importação no Essencial, quando marcadas na assinatura, entram só na primeira cobrança. Nos meses seguintes fica o preço do plano. No Profissional e no Ilimitado, as duas já estão inclusas. Prontuário, financeiro, fotos e uma segunda base ficam sob consulta. A Jade IA já responde no plano Ilimitado, só para administrador e gestor.
+          No Essencial, implantação e importação de pacientes formam um pacote opcional e entram só na primeira cobrança. Nos meses seguintes fica o preço do plano. No Profissional e no Ilimitado, as duas já estão inclusas. Prontuário, financeiro, fotos e uma segunda base ficam sob consulta. A Jade IA já responde no plano Ilimitado, só para administrador e gestor.
         </p>
       </div>
     </section>

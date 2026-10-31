@@ -11,7 +11,7 @@ function textoAdicionais(adicionais: Partial<Record<"essencial" | "profissional"
     return "No Essencial, implantação e importação de pacientes são opcionais e entram só na primeira cobrança, pelo valor mostrado no plano. No Profissional e no Ilimitado, implantação e importação de cadastro e agenda já estão inclusas. Nos meses seguintes fica só o preço do plano.";
   }
   const essencial = adicionais.essencial;
-  return `No Essencial, implantação custa ${reais(essencial.implantacao)} e a importação de pacientes custa ${reais(essencial.importacao)}. As duas são opcionais e entram só na primeira cobrança. No Profissional e no Ilimitado, implantação e importação de cadastro e agenda já estão inclusas. Nos meses seguintes fica só o preço do plano.`;
+  return `No Essencial, implantação e importação de pacientes custam ${reais(essencial.pacote)}, juntas, e entram só na primeira cobrança. No Profissional e no Ilimitado, implantação e importação de cadastro e agenda já estão inclusas. Nos meses seguintes fica só o preço do plano.`;
 }
 
 export function FaqSection({

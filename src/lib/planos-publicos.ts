@@ -22,22 +22,20 @@ export function linkDoSistema(caminho = "/login") {
 }
 
 export interface AdicionaisPrimeiraCobranca {
-  implantacao: number;
-  importacao: number;
+  pacote: number;
 }
 
 export interface CatalogoPublico {
   planos: PlanoPublico[];
-  /** Preço de cada serviço no Essencial e no Profissional. Vazio quando a API não informa. */
+  /** Preço do pacote no Essencial. Vazio quando a API não informa. */
   adicionais: Partial<Record<"essencial" | "profissional", AdicionaisPrimeiraCobranca>>;
 }
 
 function lerAdicionais(valor: unknown): AdicionaisPrimeiraCobranca | null {
   if (!valor || typeof valor !== "object") return null;
-  const item = valor as { implantacao?: unknown; importacao?: unknown };
-  if (typeof item.implantacao !== "number" || typeof item.importacao !== "number") return null;
-  if (item.implantacao <= 0 || item.importacao <= 0) return null;
-  return { implantacao: item.implantacao, importacao: item.importacao };
+  const item = valor as { pacote?: unknown };
+  if (typeof item.pacote !== "number" || item.pacote <= 0) return null;
+  return { pacote: item.pacote };
 }
 
 export async function listarPlanosPublicos(): Promise<CatalogoPublico | null> {
