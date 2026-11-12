@@ -8,7 +8,7 @@ export function TestimonialsSection() {
   const outcomes = [
     {
       role: "Gestão de clínica multiprofissional",
-      text: "Lembretes por WhatsApp e e-mail no plano Ilimitado reduzem o no-show e liberam a recepção das ligações de confirmação.",
+      text: "A agenda do dia, a confirmação e a lista de espera tiram o controle do papel e deixam a recepção enxergar quem ainda não confirmou.",
       focus: "Menos faltas",
     },
     {

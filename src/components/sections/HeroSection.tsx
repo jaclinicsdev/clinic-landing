@@ -116,7 +116,7 @@ export function HeroSection({ onOpenDemo }: HeroSectionProps) {
               transition={{ duration: 0.5, delay: 0.16 }}
               className="mt-5 text-[15px] sm:text-base text-white/72 leading-relaxed max-w-md"
             >
-              Agenda, pacientes, financeiro e lembretes no WhatsApp — em um só sistema para o consultório e a clínica.
+              Agenda, pacientes e financeiro — em um só sistema para o consultório e a clínica.
             </motion.p>
 
             <motion.div

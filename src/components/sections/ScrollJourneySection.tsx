@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MessageSquare,
   DollarSign,
   TrendingUp,
   Clock,
@@ -17,29 +16,25 @@ export function ScrollJourneySection() {
   const steps = [
     {
       time: "08:00",
-      tag: "Integrações e lembretes",
-      title: "Lembretes no WhatsApp e no e-mail",
-      desc: "O módulo de integração envia lembretes das consultas para pacientes e profissionais, via WhatsApp e e-mail, no horário configurado pela clínica.",
-      icon: MessageSquare,
+      tag: "Pacientes",
+      title: "Ficha pronta antes de chamar",
+      desc: "A equipe abre o paciente com contato, convênio e o histórico de consultas antes do horário. A confirmação do dia fica na própria agenda.",
+      icon: Clock,
       accent: "text-ja-teal bg-ja-surface border-ja-line",
-      uiTitle: "Lembretes de consulta",
+      uiTitle: "Paciente do horário",
       uiContent: (
         <div className="space-y-3 text-xs">
           <div className="p-3.5 rounded-xl bg-white/5 border border-white/10">
-            <div className="text-[10px] text-white/70 font-bold">WhatsApp · paciente · 24h antes</div>
-            <p className="text-white/85 mt-1">
-              &quot;Olá Marcos! Lembrete: consulta amanhã às 14h com Dra. Helena Vaz na Unidade Jardins.&quot;
-            </p>
+            <div className="text-[10px] text-white/70 font-bold">14:00 · Marcos Almeida</div>
+            <p className="text-white/85 mt-1">Consulta com Dra. Helena Vaz · Unidade Jardins · particular.</p>
           </div>
           <div className="p-3.5 rounded-xl bg-white/5 border border-white/10">
-            <div className="text-[10px] text-white/70 font-bold">E-mail · profissional</div>
-            <p className="text-white/85 mt-1">
-              &quot;Dra. Helena, você tem 6 atendimentos amanhã. Primeiro horário: 08h00.&quot;
-            </p>
+            <div className="text-[10px] text-white/70 font-bold">Na ficha</div>
+            <p className="text-white/85 mt-1">Convênio, alergias e a última consulta aparecem antes de chamar a sala.</p>
           </div>
           <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between text-white/75 text-[11px]">
-            <span>Canais:</span>
-            <span className="font-bold text-white">WhatsApp e e-mail</span>
+            <span>Status:</span>
+            <span className="font-bold text-white">Agendado</span>
           </div>
         </div>
       ),

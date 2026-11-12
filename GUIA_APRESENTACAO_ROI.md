@@ -34,7 +34,7 @@ $$\text{Consultas Recuperadas} = \text{Total de Consultas} \times 16\%$$
 
 * **De onde vêm os 16%?**
   * Pesquisas no setor de saúde (inclusive estudos do CFM e ABRAMED) mostram que a taxa de faltas sem aviso prévio (*no-show*) em consultórios varia entre **20% e 35%**.
-  * Quando a clínica implementa lembretes automáticos multicanal via WhatsApp oficial com botões interativos ("Confirmar" ou "Remarcar"), a taxa de faltas cai em média **60% a 70%**.
+  * Quando a clínica confirma a consulta com antecedência e consegue encaixar quem desiste, a taxa de faltas cai em média **60% a 70%**. O produto ainda não envia essa confirmação pelo WhatsApp; isso entra na próxima versão.
   * Assumir uma recuperação de **16%** do total de agendamentos é um cenário realista e com pé no chão — médicos desconfiam de promessas milagrosas de 100%, mas acham 16% perfeitamente atingível.
 
 ---
@@ -97,7 +97,7 @@ Use esta estrutura de 4 etapas na sua reunião ou chamada de demonstração:
 
 ### Etapa 3: Abrir a Calculadora e Mostrar o Resultado
 > *(Insira os dados dele na tela ao vivo)*
-> *"Olha só esse número: com 4 profissionais e 10 atendimentos/dia, a sua clínica realiza cerca de 880 atendimentos por mês. Mesmo com uma estimativa super conservadora de resgate de apenas 16% das faltas através da confirmação automática no WhatsApp oficial, estamos falando de **141 pacientes a mais no consultório**, o que representa **mais de R$ 31.000,00 de faturamento recuperado** todo santo mês."*
+> *"Olha só esse número: com 4 profissionais e 10 atendimentos/dia, a sua clínica realiza cerca de 880 atendimentos por mês. Mesmo com uma estimativa conservadora de resgate de apenas 16% das faltas, com a agenda do dia, a confirmação na recepção e a lista de espera, estamos falando de **141 pacientes a mais no consultório**, o que representa **mais de R$ 31.000,00 de faturamento recuperado** todo santo mês."*
 
 ### Etapa 4: Fazer o Fechamento por Comparação
 > *"O plano Profissional com suporte humanizado no WhatsApp e financeiro completo custa R$ 700 por mês. Para pagar o sistema inteiro, você só precisa salvar 4 consultas no mês todo. Se o Clinic Manager te devolver 5 consultas, ele já colocou dinheiro no seu bolso. Faz sentido começarmos o teste gratuito de 7 dias hoje?"*
@@ -108,7 +108,7 @@ Use esta estrutura de 4 etapas na sua reunião ou chamada de demonstração:
 
 ### Objeção 1: *"Minha secretária já confirma tudo pelo WhatsApp normal."*
 * **Resposta**: 
-  > *"Perfeito! O problema é que isso consome cerca de 80 horas do mês dela — metade do salário que você paga para ela é só para mandar mensagens que pacientes muitas vezes nem leem. Além disso, no WhatsApp normal os dados ficam no celular pessoal, sem compliance com a LGPD e sem atualizar a agenda médica em tempo real. Com o Clinic Manager, o sistema faz isso no piloto automático via API oficial e a sua secretária fica livre para acolher bem o paciente na recepção e vender procedimentos de maior valor."*
+  > *"Perfeito, e isso continua válido. Hoje o sistema organiza a agenda, o status de confirmação e a lista de espera no mesmo horário, para a recepção não depender de planilha. A confirmação automática pelo WhatsApp ainda não está no produto; é a próxima versão."*
 
 ### Objeção 2: *"Minha taxa de faltas é baixa, não chega a 16%."*
 * **Resposta**:

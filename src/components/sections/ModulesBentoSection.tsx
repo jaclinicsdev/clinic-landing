@@ -7,7 +7,6 @@ import {
   DollarSign,
   BarChart3,
   Boxes,
-  MessageSquare,
   BellRing,
   Bot,
   Palette,
@@ -153,24 +152,23 @@ export function ModulesBentoSection() {
             </div>
           </motion.div>
 
-          {/* Card 3 (1 col) : Integrações e lembretes */}
           <motion.div
             variants={cardVariants}
             className="bg-ja-card rounded-2xl p-6 border border-ja-line shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
           >
             <div>
               <div className="w-11 h-11 rounded-2xl bg-ja-surface text-ja-teal border border-ja-line flex items-center justify-center mb-4">
-                <MessageSquare className="w-5 h-5" />
+                <Calendar className="w-5 h-5" />
               </div>
               <h4 className="text-lg font-bold text-ja-ink font-display">
-                Integrações e lembretes
+                Confirmação na agenda
               </h4>
               <p className="text-xs text-ja-muted mt-2 leading-relaxed">
-                No plano Ilimitado, envio de lembretes das consultas para pacientes e profissionais, via WhatsApp e e-mail.
+                A recepção confirma, faz check-in e acompanha cada horário até o atendimento, no mesmo fluxo da agenda.
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-ja-line flex items-center gap-1.5 text-ja-teal font-bold text-xs">
-              <span>WhatsApp e e-mail</span>
+              <span>Do agendado ao atendido</span>
             </div>
           </motion.div>
 

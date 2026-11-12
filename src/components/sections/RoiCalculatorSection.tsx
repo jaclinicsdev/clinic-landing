@@ -36,7 +36,7 @@ export function RoiCalculatorSection({ onOpenDemo }: RoiCalculatorSectionProps) 
             Quanto sua clínica deixa na mesa com faltas e processos manuais?
           </h2>
           <p className="mt-3 text-base sm:text-lg text-ja-muted">
-            Simule o impacto de reduzir faltas com lembretes automáticos para pacientes e profissionais, via WhatsApp e e-mail.
+            Simule o impacto de reduzir faltas com a agenda do dia, a confirmação na recepção e menos processo manual.
           </p>
         </div>
 
