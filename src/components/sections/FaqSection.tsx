@@ -38,6 +38,11 @@ export function FaqSection({
         "O Clinic Manager foi desenvolvido com foco total em usabilidade intuitiva (Zero Curva de Aprendizado). Em menos de 20 minutos de treinamento guiado, secretárias e profissionais de saúde já dominam a agenda e o acompanhamento de evolução com total facilidade.",
     },
     {
+      question: "Como funcionam os lembretes de consulta?",
+      answer:
+        "No plano Ilimitado, o módulo de integrações envia lembretes das consultas para pacientes e profissionais, via WhatsApp e e-mail, no horário configurado pela clínica.",
+    },
+    {
       question: "O faturamento de convênios gera XML TISS?",
       answer:
         "A partir do plano Profissional, a clínica fecha lotes de convênio, registra glosa e concilia o valor recebido. O sistema não gera XML nem guia no padrão TISS.",

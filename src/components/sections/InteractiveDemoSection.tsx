@@ -51,13 +51,13 @@ export function InteractiveDemoSection() {
       icon: Calendar,
       tag: "Recepção Ágil",
       title: "Agenda Inteligente",
-      desc: "Visualização por dia, semana ou mês com filtros por profissional e sala. Confirmação, check-in e status ficam no mesmo horário.",
+      desc: "Visualização por dia, semana ou mês com filtros por profissional e sala. Lembretes de consulta saem pelo módulo de integração, via WhatsApp e e-mail.",
       screenshot: "/screenshots/agenda.png",
       badge: "Produção",
       highlights: [
         "Visualização multi-profissional e por salas",
-        "Confirmação, check-in e status no horário",
-        "Bloqueio de horário e lista de espera",
+        "Lembretes para pacientes e profissionais",
+        "WhatsApp e e-mail no mesmo módulo",
       ],
     },
     {

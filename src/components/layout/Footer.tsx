@@ -21,7 +21,7 @@ export function Footer() {
             </a>
 
             <p className="text-white/60 leading-relaxed max-w-sm text-[13px]">
-              Gestão clínica para consultórios e clínicas. Agenda, pacientes, financeiro, estoque e relatórios.
+              Gestão clínica para consultórios e clínicas. Agenda, pacientes, financeiro, estoque, relatórios e lembretes por WhatsApp e e-mail.
             </p>
 
             <p className="text-[11px] tracking-wide text-white/40">
@@ -39,7 +39,7 @@ export function Footer() {
               <li><a href="#modulos" className="hover:text-white transition-colors">Pacientes e evolução</a></li>
               <li><a href="#modulos" className="hover:text-white transition-colors">Financeiro e convênios</a></li>
               <li><a href="#modulos" className="hover:text-white transition-colors">Estoque</a></li>
-              <li><a href="#modulos" className="hover:text-white transition-colors">Relatórios</a></li>
+              <li><a href="#modulos" className="hover:text-white transition-colors">Lembretes WhatsApp e e-mail</a></li>
             </ul>
           </div>
 
