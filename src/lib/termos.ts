@@ -29,7 +29,7 @@ export const CLAUSULAS_TERMOS = [
   {
     titulo: "Da assinatura e do pagamento",
     paragrafos: [
-      "A assinatura mensal pode ser paga por cartão de crédito, com cobrança recorrente, ou por Pix. A assinatura anual pode ser paga por Pix à vista ou por cartão de crédito em até 12 (doze) parcelas.",
+      "A assinatura mensal pode ser paga por cartão de crédito, com cobrança recorrente, ou por Pix. Na assinatura anual, um mês sai de graça: o preço do ano corresponde a onze mensalidades. Ela pode ser paga por Pix à vista ou por cartão de crédito em até 12 (doze) parcelas.",
       "O preço devido é o do plano escolhido no momento da contratação. Cupom de desconto, quando válido e aplicado, incide somente sobre a assinatura em que foi utilizado.",
       "A falta de pagamento autoriza a suspensão do acesso até a regularização, sem prejuízo da cobrança dos valores já vencidos.",
     ],

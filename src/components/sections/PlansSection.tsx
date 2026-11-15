@@ -40,7 +40,7 @@ export function PlansSection({ precos, precosAnuais, adicionais, onTestarGratis 
             Escolha o plano pelo que a clínica usa hoje
           </h2>
           <p className="mt-4 text-base sm:text-lg text-ja-muted">
-            Compare os módulos, teste 7 dias ou assine agora. O acesso chega por e-mail.
+            Compare os módulos, teste 7 dias ou assine agora. No anual, um mês sai de graça. O acesso chega por e-mail.
           </p>
         </div>
 
@@ -92,7 +92,7 @@ export function PlansSection({ precos, precosAnuais, adicionais, onTestarGratis 
                       <span className={`text-sm font-semibold ${plano.destaque ? "text-white/70" : "text-ja-muted"}`}> /mês</span>
                     </p>
                     <p className={`mt-0.5 text-xs ${plano.destaque ? "text-white/65" : "text-ja-muted"}`}>
-                      {anualAVenda ? `${reais(precoAnual)} por ano: Pix à vista ou cartão em até 12x.` : "7 dias grátis ou assinatura mensal."}
+                      {anualAVenda ? `${reais(precoAnual)} por ano. Um mês sai de graça. Pix à vista ou cartão em até 12x.` : "7 dias grátis ou assinatura mensal."}
                     </p>
                   </>
                 ) : (
@@ -192,7 +192,7 @@ export function PlansSection({ precos, precosAnuais, adicionais, onTestarGratis 
                           : "border-ja-line text-ja-ink hover:bg-ja-surface"
                       }`}
                     >
-                      Assinar anual
+                      Assinar anual · 1 mês grátis
                     </Link>
                   ) : null}
                 </div>

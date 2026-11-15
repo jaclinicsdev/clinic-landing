@@ -444,7 +444,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, adi
                   onClick={() => escolher(planoEscolhido.codigo, item)}
                   className={`rounded-lg px-3 py-2 text-sm font-semibold ${ativo ? "bg-ja-teal text-white" : "text-ja-muted hover:text-ja-ink"}`}
                 >
-                  {item === "mensal" ? "Mensal" : "Anual"}
+                  {item === "mensal" ? "Mensal" : "Anual · 1 mês grátis"}
                 </button>
               );
             })}
@@ -467,7 +467,7 @@ export function FormularioAssinatura({ plano, nomePlano, preco, modo, ciclo, adi
                 : `só neste mês · depois ${reais(precoFinal)} /mês`
               : pago
                 ? anual
-                  ? "pelo ano"
+                  ? "pelo ano · um mês sai de graça"
                   : "por mês"
                 : "7 dias no plano escolhido"}
             {cupom ? ` · ${cupom.codigo} (${cupom.percentual}%)` : ""}
